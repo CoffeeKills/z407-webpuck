@@ -4,263 +4,326 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Z407 Neuromorphic Puck</title>
+    <title>Z407 3D Puck</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #e0e5ec;
-            --text-color: #4a4a4a;
+            --bg: #e0e5ec;
+            --text: #555;
             --shadow-light: #ffffff;
             --shadow-dark: #a3b1c6;
-            --accent-color: #6d5dfc;
+            --accent: #6d5dfc;
+            --puck-size: 340px;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            overflow: hidden;
+            perspective: 1000px;
+            /* For 3D tilt effect */
         }
 
-        h1 {
-            font-weight: 300;
-            letter-spacing: 2px;
-            margin-bottom: 30px;
-            color: #555;
+        /* --- The Main Puck Container --- */
+        .puck-wrapper {
+            position: relative;
+            width: var(--puck-size);
+            height: var(--puck-size);
+            border-radius: 50%;
+            background: var(--bg);
+            /* Deep soft shadow for "floating" effect */
+            box-shadow: 20px 20px 60px var(--shadow-dark),
+                -20px -20px 60px var(--shadow-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+            /* Subtle texture/gradient on the face */
+            background: linear-gradient(145deg, #f0f5fc, #cacfd6);
         }
 
-        /* Neuromorphic Utils */
-        .neumorphic {
-            border-radius: 20px;
-            background: var(--bg-color);
-            box-shadow: 9px 9px 16px var(--shadow-dark),
-                -9px -9px 16px var(--shadow-light);
-            border: none;
-            outline: none;
-        }
-
-        .neumorphic-btn {
-            cursor: pointer;
-            font-weight: 600;
-            color: #666;
-            transition: all 0.2s ease;
+        /* Inner ring to separate edge from controls */
+        .puck-inner-ring {
+            width: 85%;
+            height: 85%;
+            border-radius: 50%;
+            /* Inset shadow to create a "dish" or recessed look */
+            box-shadow: inset 8px 8px 16px var(--shadow-dark),
+                inset -8px -8px 16px var(--shadow-light);
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .neumorphic-btn:active {
-            box-shadow: inset 6px 6px 10px var(--shadow-dark),
-                inset -6px -6px 10px var(--shadow-light);
-            color: var(--accent-color);
+        /* --- Control Layout --- */
+
+        /* Center Dial (Volume/Play) */
+        .center-dial {
+            width: 50%;
+            height: 50%;
+            border-radius: 50%;
+            background: var(--bg);
+            /* Pop it back out */
+            box-shadow: 6px 6px 12px var(--shadow-dark),
+                -6px -6px 12px var(--shadow-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            cursor: grab;
+            position: relative;
         }
 
-        .neumorphic-btn.active-state {
-            box-shadow: inset 6px 6px 10px var(--shadow-dark),
-                inset -6px -6px 10px var(--shadow-light);
-            color: var(--accent-color);
+        .center-dial:active {
+            cursor: grabbing;
         }
 
-        /* Layout */
-        .container {
+        .play-btn {
+            width: 60%;
+            height: 60%;
+            border-radius: 50%;
+            border: none;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1.5rem;
+            cursor: pointer;
+            /* Flat/Subtle state */
+            box-shadow: 3px 3px 6px var(--shadow-dark),
+                -3px -3px 6px var(--shadow-light);
+            transition: all 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .play-btn:active {
+            box-shadow: inset 3px 3px 6px var(--shadow-dark),
+                inset -3px -3px 6px var(--shadow-light);
+            color: var(--accent);
+        }
+
+        /* Buttons arranged in the "Dish" */
+        .satellite-btn {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Small pop-out */
+            box-shadow: 4px 4px 8px var(--shadow-dark),
+                -4px -4px 8px var(--shadow-light);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .satellite-btn:active {
+            box-shadow: inset 2px 2px 5px var(--shadow-dark),
+                inset -2px -2px 5px var(--shadow-light);
+            color: var(--accent);
+            transform: scale(0.95);
+        }
+
+        /* Positioning - Using polar-like coordinates via absolute/transform */
+        /* Top: Sources */
+        .pos-top {
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .pos-top-left {
+            top: 20%;
+            left: 20%;
+        }
+
+        .pos-top-right {
+            top: 20%;
+            right: 20%;
+        }
+
+        /* Bottom: Bass */
+        .pos-bottom {
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Pair */
+        .pos-bottom-left {
+            bottom: 20%;
+            left: 20%;
+        }
+
+        .pos-bottom-right {
+            bottom: 20%;
+            right: 20%;
+        }
+
+        /* Sides: Tracks */
+        .pos-left {
+            top: 50%;
+            left: 8%;
+            transform: translateY(-50%);
+        }
+
+        .pos-right {
+            top: 50%;
+            right: 8%;
+            transform: translateY(-50%);
+        }
+
+
+        /* --- Status & Overlay --- */
+        .status-led {
+            position: absolute;
+            top: -30px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #ccc;
+            box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s;
+        }
+
+        .status-led.connected {
+            background-color: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 400px;
+            height: 100%;
+            background: rgba(224, 229, 236, 0.9);
+            z-index: 100;
             display: flex;
             flex-direction: column;
-            gap: 25px;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s;
         }
 
-        .connect-area {
-            display: flex;
-            justify-content: center;
+        .overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
         }
 
         .big-btn {
-            padding: 15px 30px;
-            font-size: 1.1rem;
-            border-radius: 50px;
-        }
-
-        /* The Puck */
-        .puck-container {
-            position: relative;
-            width: 300px;
-            height: 300px;
-            margin: 0 auto;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .puck-outer {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            position: absolute;
-        }
-
-        /* Circular Controls */
-        .d-pad {
-            position: relative;
-            width: 100%;
-            height: 100%;
-        }
-
-        .d-btn {
-            position: absolute;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            font-size: 20px;
-        }
-
-        .d-up {
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .d-down {
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .d-left {
-            left: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-
-        .d-right {
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-
-        .center-btn {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
+            padding: 15px 40px;
+            border-radius: 30px;
+            border: none;
+            background: var(--bg);
+            color: var(--text);
             font-size: 1.2rem;
-            z-index: 10;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 8px 8px 16px var(--shadow-dark),
+                -8px -8px 16px var(--shadow-light);
         }
 
-        /* Source Selectors */
-        .source-controls {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px;
+        .big-btn:active {
+            box-shadow: inset 4px 4px 8px var(--shadow-dark),
+                inset -4px -4px 8px var(--shadow-light);
         }
 
-        .source-btn {
-            width: 80px;
-            height: 40px;
-            font-size: 0.8rem;
-            border-radius: 10px;
+        /* Small labels for clarity */
+        .label {
+            position: absolute;
+            font-size: 0.6rem;
+            opacity: 0.5;
+            pointer-events: none;
         }
 
-        /* Extra Controls */
-        .extra-controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
+        .lbl-src {
+            top: 25px;
         }
 
-        .rect-btn {
-            padding: 12px;
-            border-radius: 12px;
-            font-size: 0.9rem;
-        }
-
-        /* Logs */
-        #log {
-            font-family: monospace;
-            font-size: 0.8rem;
-            padding: 15px;
-            height: 150px;
-            overflow-y: auto;
-            color: #666;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        /* Icons (using text for simplicity) */
-        .icon {
-            font-size: 1.2em;
+        .lbl-bass {
+            bottom: 25px;
         }
     </style>
 </head>
 
 <body>
 
-    <h1>Z407 WEB PUCK</h1>
+    <div id="overlay" class="overlay">
+        <h1 style="margin-bottom: 2rem; color: #444;">Z407 PUCK</h1>
+        <button id="connectBtn" class="big-btn">CONNECT</button>
+    </div>
 
-    <div class="container">
+    <div class="status-led" id="led"></div>
 
-        <div class="connect-area">
-            <button id="connectBtn" class="neumorphic neumorphic-btn big-btn">
-                <span class="icon">🔗</span>&nbsp; Connect
-            </button>
-        </div>
+    <div class="puck-wrapper" id="puck">
+        <div class="puck-inner-ring">
 
-        <div id="controls" class="container hidden">
+            <!-- Labels -->
+            <span class="label lbl-src">SOURCE</span>
+            <span class="label lbl-bass">BASS</span>
 
-            <!-- The Puck Interface -->
-            <div class="neumorphic puck-container">
-                <div class="d-pad">
-                    <!-- Volume Up -->
-                    <button id="volumeUpBtn" class="neumorphic neumorphic-btn d-btn d-up" title="Volume Up">➕</button>
-                    <!-- Volume Down -->
-                    <button id="volumeDownBtn" class="neumorphic neumorphic-btn d-btn d-down"
-                        title="Volume Down">➖</button>
-                    <!-- Prev Track -->
-                    <button id="prevTrackBtn" class="neumorphic neumorphic-btn d-btn d-left" title="Previous">⏮</button>
-                    <!-- Next Track -->
-                    <button id="nextTrackBtn" class="neumorphic neumorphic-btn d-btn d-right" title="Next">⏭</button>
+            <!-- Top: Source Controls -->
+            <button id="btn-bt" class="satellite-btn pos-top" title="Bluetooth">BT</button>
+            <button id="btn-aux" class="satellite-btn pos-top-left" title="AUX">AUX</button>
+            <button id="btn-usb" class="satellite-btn pos-top-right" title="USB">USB</button>
 
-                    <!-- Play/Pause (Center) -->
-                    <button id="playPauseBtn" class="neumorphic neumorphic-btn center-btn"
-                        style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-                        ⏯
-                    </button>
-                </div>
+            <!-- Sides: Track Controls -->
+            <button id="btn-prev" class="satellite-btn pos-left" title="Previous">⏮</button>
+            <button id="btn-next" class="satellite-btn pos-right" title="Next">⏭</button>
+
+            <!-- Bottom: Bass & Pair -->
+            <button id="btn-pair" class="satellite-btn pos-bottom" title="Pairing">∞</button>
+            <button id="btn-bass-down" class="satellite-btn pos-bottom-left" title="Bass Down">-</button>
+            <button id="btn-bass-up" class="satellite-btn pos-bottom-right" title="Bass Up">+</button>
+
+            <!-- Center: Volume Knob & Play -->
+            <div class="center-dial" id="volumeKnob">
+                <button id="btn-play" class="play-btn" title="Play/Pause">⏯</button>
             </div>
-
-            <!-- Source Switching -->
-            <div class="source-controls">
-                <button id="switchBluetoothBtn" class="neumorphic neumorphic-btn source-btn">BT</button>
-                <button id="switchAuxBtn" class="neumorphic neumorphic-btn source-btn">AUX</button>
-                <button id="switchUsbBtn" class="neumorphic neumorphic-btn source-btn">USB</button>
-            </div>
-
-            <!-- Bass Controls -->
-            <div class="extra-controls">
-                <button id="bassUpBtn" class="neumorphic neumorphic-btn rect-btn">Bass ⬆</button>
-                <button id="bassDownBtn" class="neumorphic neumorphic-btn rect-btn">Bass ⬇</button>
-            </div>
-
-            <!-- System -->
-            <div class="extra-controls">
-                <button id="pairingBtn" class="neumorphic neumorphic-btn rect-btn">Pairing Mode</button>
-                <button id="factoryResetBtn" class="neumorphic neumorphic-btn rect-btn"
-                    style="color: #d65d5d;">Reset</button>
-            </div>
-
-            <div id="log" class="neumorphic"></div>
 
         </div>
     </div>
 
     <script>
-        // --- Logic Copied from index.html ---
+        // --- 3D Tilt Effect (Subtle JS) ---
+        const puck = document.getElementById('puck');
+
+        document.addEventListener('mousemove', (e) => {
+            const { clientX, clientY } = e;
+            const { innerWidth, innerHeight } = window;
+
+            // Calculate percentage from center (-1 to 1)
+            const x = (clientX / innerWidth - 0.5) * 2;
+            const y = (clientY / innerHeight - 0.5) * 2;
+
+            // Subtle tilt: max 10 degrees
+            // Move shadow in opposite direction
+            puck.style.transform = `rotateX(${-y * 10}deg) rotateY(${x * 10}deg)`;
+
+            // Dynamic Shadow
+            const shadowX = -x * 30;
+            const shadowY = -y * 30;
+            puck.style.boxShadow = `${20 + shadowX}px ${20 + shadowY}px 60px var(--shadow-dark), 
+                                ${-20 + shadowX}px ${-20 + shadowY}px 60px var(--shadow-light)`;
+        });
+
+
+        // --- Bluetooth Logic (Same as before) ---
         const SERVICE_UUID = '0000fdc2-0000-1000-8000-00805f9b34fb';
         const COMMAND_UUID = 'c2e758b9-0e78-41e0-b0cb-98a593193fc5';
         const RESPONSE_UUID = 'b84ac9c6-29c5-46d4-bba1-9d534784330f';
@@ -279,93 +342,108 @@
             SWITCH_AUX: new Uint8Array([0x81, 0x02]),
             SWITCH_USB: new Uint8Array([0x81, 0x03]),
             PAIRING: new Uint8Array([0x82, 0x00]),
-            FACTORY_RESET: new Uint8Array([0x83, 0x00]),
         };
 
-        const connectButton = document.getElementById('connectBtn');
-        const controlsDiv = document.getElementById('controls');
-        const logElement = document.getElementById('log');
         let commandCharacteristic = null;
+        const overlay = document.getElementById('overlay');
+        const led = document.getElementById('led');
 
-        function log(message) {
-            console.log(message);
-            const line = document.createElement('div');
-            line.textContent = `> ${message}`;
-            logElement.appendChild(line);
-            logElement.scrollTop = logElement.scrollHeight;
-        }
-
-        connectButton.addEventListener('click', async () => {
-            if (!navigator.bluetooth) {
-                log('Web Bluetooth API is not available.');
-                return;
-            }
+        async function connect() {
+            if (!navigator.bluetooth) return alert('Web Bluetooth not supported.');
             try {
-                log('Requesting device...');
                 const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID] }] });
-
                 device.addEventListener('gattserverdisconnected', () => {
-                    log('Disconnected.');
-                    controlsDiv.classList.add('hidden');
-                    connectButton.classList.remove('hidden');
+                    overlay.classList.remove('hidden');
+                    led.classList.remove('connected');
                     commandCharacteristic = null;
                 });
 
                 const server = await device.gatt.connect();
-                log('Connected. Getting service...');
                 const service = await server.getPrimaryService(SERVICE_UUID);
-                const responseCharacteristic = await service.getCharacteristic(RESPONSE_UUID);
+                const responseChar = await service.getCharacteristic(RESPONSE_UUID);
                 commandCharacteristic = await service.getCharacteristic(COMMAND_UUID);
 
-                await responseCharacteristic.startNotifications();
-                log('Handshaking...');
-
-                responseCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
-                    const value = event.target.value;
-                    const hexString = Array.from(new Uint8Array(value.buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-
-                    if (hexString === 'd40501') {
-                        commandCharacteristic.writeValueWithoutResponse(COMMANDS.ACKNOWLEDGE);
-                    } else if (hexString === 'd40001' || hexString === 'd40003') {
-                        log('Ready!');
-                        controlsDiv.classList.remove('hidden');
-                        connectButton.classList.add('hidden');
+                await responseChar.startNotifications();
+                responseChar.addEventListener('characteristicvaluechanged', (e) => {
+                    const hex = Array.from(new Uint8Array(e.target.value.buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+                    if (hex === 'd40501') commandCharacteristic.writeValueWithoutResponse(COMMANDS.ACKNOWLEDGE);
+                    else if (hex === 'd40001' || hex === 'd40003') {
+                        overlay.classList.add('hidden');
+                        led.classList.add('connected');
                     }
                 });
 
                 await commandCharacteristic.writeValueWithoutResponse(COMMANDS.INITIATE);
-            } catch (error) {
-                log(`Error: ${error.message}`);
-            }
-        });
-
-        async function sendCommand(command) {
-            if (!commandCharacteristic) return;
-            try {
-                await commandCharacteristic.writeValueWithoutResponse(command);
-                // Visual feedback could go here
-            } catch (error) {
-                log(`Error: ${error.message}`);
-            }
+            } catch (e) { console.error(e); }
         }
 
-        // Bindings
-        document.getElementById('volumeUpBtn').addEventListener('click', () => sendCommand(COMMANDS.VOLUME_UP));
-        document.getElementById('volumeDownBtn').addEventListener('click', () => sendCommand(COMMANDS.VOLUME_DOWN));
-        document.getElementById('bassUpBtn').addEventListener('click', () => sendCommand(COMMANDS.BASS_UP));
-        document.getElementById('bassDownBtn').addEventListener('click', () => sendCommand(COMMANDS.BASS_DOWN));
-        document.getElementById('playPauseBtn').addEventListener('click', () => sendCommand(COMMANDS.PLAY_PAUSE));
-        document.getElementById('nextTrackBtn').addEventListener('click', () => sendCommand(COMMANDS.NEXT_TRACK));
-        document.getElementById('prevTrackBtn').addEventListener('click', () => sendCommand(COMMANDS.PREV_TRACK));
+        async function send(cmd) {
+            if (commandCharacteristic) await commandCharacteristic.writeValueWithoutResponse(cmd);
+        }
 
-        document.getElementById('switchBluetoothBtn').addEventListener('click', () => sendCommand(COMMANDS.SWITCH_BLUETOOTH));
-        document.getElementById('switchAuxBtn').addEventListener('click', () => sendCommand(COMMANDS.SWITCH_AUX));
-        document.getElementById('switchUsbBtn').addEventListener('click', () => sendCommand(COMMANDS.SWITCH_USB));
+        // --- Knob Rotation Logic ---
+        let isDragging = false;
+        let startAngle = 0;
+        let currentRotation = 0;
+        let lastSentRotation = 0;
+        const knob = document.getElementById('volumeKnob');
 
-        document.getElementById('pairingBtn').addEventListener('click', () => sendCommand(COMMANDS.PAIRING));
-        document.getElementById('factoryResetBtn').addEventListener('click', () => {
-            if (confirm("Factory Reset?")) sendCommand(COMMANDS.FACTORY_RESET);
+        function getAngle(x, y, cx, cy) {
+            return Math.atan2(y - cy, x - cx) * 180 / Math.PI;
+        }
+
+        const startDrag = (e) => {
+            isDragging = true;
+            const rect = knob.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            startAngle = getAngle(clientX, clientY, cx, cy) - currentRotation;
+            e.preventDefault(); // Stop text selection
+        };
+
+        const drag = (e) => {
+            if (!isDragging) return;
+            const rect = knob.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            currentRotation = getAngle(clientX, clientY, cx, cy) - startAngle;
+            knob.style.transform = `rotate(${currentRotation}deg)`;
+
+            const delta = currentRotation - lastSentRotation;
+            if (delta > 15) { send(COMMANDS.VOLUME_UP); lastSentRotation = currentRotation; }
+            else if (delta < -15) { send(COMMANDS.VOLUME_DOWN); lastSentRotation = currentRotation; }
+        };
+
+        const endDrag = () => { isDragging = false; };
+
+        knob.addEventListener('mousedown', startDrag);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', endDrag);
+        knob.addEventListener('touchstart', startDrag);
+        document.addEventListener('touchmove', drag);
+        document.addEventListener('touchend', endDrag);
+
+        // --- Bindings ---
+        document.getElementById('connectBtn').addEventListener('click', connect);
+        const bind = (id, cmd) => document.getElementById(id).addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent knob drag
+            send(cmd);
         });
+
+        bind('btn-play', COMMANDS.PLAY_PAUSE);
+        bind('btn-next', COMMANDS.NEXT_TRACK);
+        bind('btn-prev', COMMANDS.PREV_TRACK);
+        bind('btn-bt', COMMANDS.SWITCH_BLUETOOTH);
+        bind('btn-aux', COMMANDS.SWITCH_AUX);
+        bind('btn-usb', COMMANDS.SWITCH_USB);
+        bind('btn-bass-up', COMMANDS.BASS_UP);
+        bind('btn-bass-down', COMMANDS.BASS_DOWN);
+        bind('btn-pair', COMMANDS.PAIRING);
 
     </script>
 </body>
