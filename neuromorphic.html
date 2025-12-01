@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Z407 Neuromorphic Puck</title>
+    <style>
+        :root {
+            --bg-color: #e0e5ec;
+            --text-color: #4a4a4a;
+            --shadow-light: #ffffff;
+            --shadow-dark: #a3b1c6;
+            --accent-color: #6d5dfc;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            color: #555;
+        }
+
+        /* Neuromorphic Utils */
+        .neumorphic {
+            border-radius: 20px;
+            background: var(--bg-color);
+            box-shadow: 9px 9px 16px var(--shadow-dark),
+                -9px -9px 16px var(--shadow-light);
+            border: none;
+            outline: none;
+        }
+
+        .neumorphic-btn {
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .neumorphic-btn:active {
+            box-shadow: inset 6px 6px 10px var(--shadow-dark),
+                inset -6px -6px 10px var(--shadow-light);
+            color: var(--accent-color);
+        }
+
+        .neumorphic-btn.active-state {
+            box-shadow: inset 6px 6px 10px var(--shadow-dark),
+                inset -6px -6px 10px var(--shadow-light);
+            color: var(--accent-color);
+        }
+
+        /* Layout */
+        .container {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .connect-area {
+            display: flex;
+            justify-content: center;
+        }
+
+        .big-btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+        }
+
+        /* The Puck */
+        .puck-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .puck-outer {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        /* Circular Controls */
+        .d-pad {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .d-btn {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 20px;
+        }
+
+        .d-up {
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .d-down {
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .d-left {
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .d-right {
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .center-btn {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            z-index: 10;
+        }
+
+        /* Source Selectors */
+        .source-controls {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+        }
+
+        .source-btn {
+            width: 80px;
+            height: 40px;
+            font-size: 0.8rem;
+            border-radius: 10px;
+        }
+
+        /* Extra Controls */
+        .extra-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .rect-btn {
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+        }
+
+        /* Logs */
+        #log {
+            font-family: monospace;
+            font-size: 0.8rem;
+            padding: 15px;
+            height: 150px;
+            overflow-y: auto;
+            color: #666;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Icons (using text for simplicity) */
+        .icon {
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Z407 WEB PUCK</h1>
+
+    <div class="container">
+
+        <div class="connect-area">
+            <button id="connectBtn" class="neumorphic neumorphic-btn big-btn">
+                <span class="icon">🔗</span>&nbsp; Connect
+            </button>
+        </div>
+
+        <div id="controls" class="container hidden">
+
+            <!-- The Puck Interface -->
+            <div class="neumorphic puck-container">
+                <div class="d-pad">
+                    <!-- Volume Up -->
+                    <button id="volumeUpBtn" class="neumorphic neumorphic-btn d-btn d-up" title="Volume Up">➕</button>
+                    <!-- Volume Down -->
+                    <button id="volumeDownBtn" class="neumorphic neumorphic-btn d-btn d-down"
+                        title="Volume Down">➖</button>
+                    <!-- Prev Track -->
+                    <button id="prevTrackBtn" class="neumorphic neumorphic-btn d-btn d-left" title="Previous">⏮</button>
+                    <!-- Next Track -->
+                    <button id="nextTrackBtn" class="neumorphic neumorphic-btn d-btn d-right" title="Next">⏭</button>
+
+                    <!-- Play/Pause (Center) -->
+                    <button id="playPauseBtn" class="neumorphic neumorphic-btn center-btn"
+                        style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                        ⏯
+                    </button>
+                </div>
+            </div>
+
+            <!-- Source Switching -->
+            <div class="source-controls">
+                <button id="switchBluetoothBtn" class="neumorphic neumorphic-btn source-btn">BT</button>
+                <button id="switchAuxBtn" class="neumorphic neumorphic-btn source-btn">AUX</button>
+                <button id="switchUsbBtn" class="neumorphic neumorphic-btn source-btn">USB</button>
+            </div>
+
+            <!-- Bass Controls -->
+            <div class="extra-controls">
+                <button id="bassUpBtn" class="neumorphic neumorphic-btn rect-btn">Bass ⬆</button>
+                <button id="bassDownBtn" class="neumorphic neumorphic-btn rect-btn">Bass ⬇</button>
+            </div>
+
+            <!-- System -->
+            <div class="extra-controls">
+                <button id="pairingBtn" class="neumorphic neumorphic-btn rect-btn">Pairing Mode</button>
+                <button id="factoryResetBtn" class="neumorphic neumorphic-btn rect-btn"
+                    style="color: #d65d5d;">Reset</button>
+            </div>
+
+            <div id="log" class="neumorphic"></div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- Logic Copied from index.html ---
+        const SERVICE_UUID = '0000fdc2-0000-1000-8000-00805f9b34fb';
+        const COMMAND_UUID = 'c2e758b9-0e78-41e0-b0cb-98a593193fc5';
+        const RESPONSE_UUID = 'b84ac9c6-29c5-46d4-bba1-9d534784330f';
+
+        const COMMANDS = {
+            INITIATE: new Uint8Array([0x84, 0x05]),
+            ACKNOWLEDGE: new Uint8Array([0x84, 0x00]),
+            VOLUME_UP: new Uint8Array([0x80, 0x02]),
+            VOLUME_DOWN: new Uint8Array([0x80, 0x03]),
+            BASS_UP: new Uint8Array([0x80, 0x00]),
+            BASS_DOWN: new Uint8Array([0x80, 0x01]),
+            PLAY_PAUSE: new Uint8Array([0x80, 0x04]),
+            NEXT_TRACK: new Uint8Array([0x80, 0x05]),
+            PREV_TRACK: new Uint8Array([0x80, 0x06]),
+            SWITCH_BLUETOOTH: new Uint8Array([0x81, 0x01]),
+            SWITCH_AUX: new Uint8Array([0x81, 0x02]),
+            SWITCH_USB: new Uint8Array([0x81, 0x03]),
+            PAIRING: new Uint8Array([0x82, 0x00]),
+            FACTORY_RESET: new Uint8Array([0x83, 0x00]),
+        };
+
+        const connectButton = document.getElementById('connectBtn');
+        const controlsDiv = document.getElementById('controls');
+        const logElement = document.getElementById('log');
+        let commandCharacteristic = null;
+
+        function log(message) {
+            console.log(message);
+            const line = document.createElement('div');
+            line.textContent = `> ${message}`;
+            logElement.appendChild(line);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        connectButton.addEventListener('click', async () => {
+            if (!navigator.bluetooth) {
+                log('Web Bluetooth API is not available.');
+                return;
+            }
+            try {
+                log('Requesting device...');
+                const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID] }] });
+
+                device.addEventListener('gattserverdisconnected', () => {
+                    log('Disconnected.');
+                    controlsDiv.classList.add('hidden');
+                    connectButton.classList.remove('hidden');
+                    commandCharacteristic = null;
+                });
+
+                const server = await device.gatt.connect();
+                log('Connected. Getting service...');
+                const service = await server.getPrimaryService(SERVICE_UUID);
+                const responseCharacteristic = await service.getCharacteristic(RESPONSE_UUID);
+                commandCharacteristic = await service.getCharacteristic(COMMAND_UUID);
+
+                await responseCharacteristic.startNotifications();
+                log('Handshaking...');
+
+                responseCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
+                    const value = event.target.value;
+                    const hexString = Array.from(new Uint8Array(value.buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+                    if (hexString === 'd40501') {
+                        commandCharacteristic.writeValueWithoutResponse(COMMANDS.ACKNOWLEDGE);
+                    } else if (hexString === 'd40001' || hexString === 'd40003') {
+                        log('Ready!');
+                        controlsDiv.classList.remove('hidden');
+                        connectButton.classList.add('hidden');
+                    }
+                });
+
+                await commandCharacteristic.writeValueWithoutResponse(COMMANDS.INITIATE);
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        });
+
+        async function sendCommand(command) {
+            if (!commandCharacteristic) return;
+            try {
+                await commandCharacteristic.writeValueWithoutResponse(command);
+                // Visual feedback could go here
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        }
+
+        // Bindings
+        document.getElementById('volumeUpBtn').addEventListener('click', () => sendCommand(COMMANDS.VOLUME_UP));
+        document.getElementById('volumeDownBtn').addEventListener('click', () => sendCommand(COMMANDS.VOLUME_DOWN));
+        document.getElementById('bassUpBtn').addEventListener('click', () => sendCommand(COMMANDS.BASS_UP));
+        document.getElementById('bassDownBtn').addEventListener('click', () => sendCommand(COMMANDS.BASS_DOWN));
+        document.getElementById('playPauseBtn').addEventListener('click', () => sendCommand(COMMANDS.PLAY_PAUSE));
+        document.getElementById('nextTrackBtn').addEventListener('click', () => sendCommand(COMMANDS.NEXT_TRACK));
+        document.getElementById('prevTrackBtn').addEventListener('click', () => sendCommand(COMMANDS.PREV_TRACK));
+
+        document.getElementById('switchBluetoothBtn').addEventListener('click', () => sendCommand(COMMANDS.SWITCH_BLUETOOTH));
+        document.getElementById('switchAuxBtn').addEventListener('click', () => sendCommand(COMMANDS.SWITCH_AUX));
+        document.getElementById('switchUsbBtn').addEventListener('click', () => sendCommand(COMMANDS.SWITCH_USB));
+
+        document.getElementById('pairingBtn').addEventListener('click', () => sendCommand(COMMANDS.PAIRING));
+        document.getElementById('factoryResetBtn').addEventListener('click', () => {
+            if (confirm("Factory Reset?")) sendCommand(COMMANDS.FACTORY_RESET);
+        });
+
+    </script>
+</body>
+
+</html>
