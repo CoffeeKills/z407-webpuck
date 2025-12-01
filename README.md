@@ -27,6 +27,10 @@ A web-based replacement for the Logitech Z407 wireless control dial (puck). This
 3. Select your **Logitech Z407** from the device list.
 4. Once connected, the controls will appear.
 
+## Documentation
+
+- [Protocol Documentation](PROTOCOL.md) - Technical details on the reverse-engineered BLE protocol.
+
 ## Troubleshooting
 
 - **"Web Bluetooth API is not available"**: Ensure you are using a supported browser (Chrome/Edge).

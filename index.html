@@ -1,23 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logitech Z407 Web Puck</title>
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 2em auto; padding: 0 1em; }
-        button { font-size: 1rem; padding: 0.5em 1em; margin: 0.25em; cursor: pointer; width: 180px; text-align: center; }
-        #log { font-family: monospace; white-space: pre-wrap; background-color: #f4f4f4; border: 1px solid #ccc; padding: 1em; height: 200px; overflow-y: scroll; }
-        .hidden { display: none !important; }
-        .controls-section { border: 1px solid #ddd; border-radius: 8px; padding: 0 1em 1em 1em; margin-bottom: 1em; }
-        .controls-section h4 { margin-bottom: 0.5em; }
-        #advanced-toggle-div { margin: 1em 0; }
-        #custom-command-input { font-size: 1rem; padding: 0.5em; width: 250px; }
+        body {
+            font-family: sans-serif;
+            max-width: 600px;
+            margin: 2em auto;
+            padding: 0 1em;
+        }
+
+        button {
+            font-size: 1rem;
+            padding: 0.5em 1em;
+            margin: 0.25em;
+            cursor: pointer;
+            width: 180px;
+            text-align: center;
+        }
+
+        #log {
+            font-family: monospace;
+            white-space: pre-wrap;
+            background-color: #f4f4f4;
+            border: 1px solid #ccc;
+            padding: 1em;
+            height: 200px;
+            overflow-y: scroll;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .controls-section {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 0 1em 1em 1em;
+            margin-bottom: 1em;
+        }
+
+        .controls-section h4 {
+            margin-bottom: 0.5em;
+        }
+
+        #advanced-toggle-div {
+            margin: 1em 0;
+        }
+
+        #custom-command-input {
+            font-size: 1rem;
+            padding: 0.5em;
+            width: 250px;
+        }
     </style>
 </head>
+
 <body>
 
     <h1>Logitech Z407 Web Puck</h1>
+
+    <div
+        style="background-color: #fff3cd; color: #856404; padding: 1em; border: 1px solid #ffeeba; border-radius: 8px; margin-bottom: 1em;">
+        <strong>Important Notes:</strong>
+        <ul style="margin: 0.5em 0 0 1.5em;">
+            <li><strong>Browser Support:</strong> You must use a browser that supports Web Bluetooth, such as
+                <strong>Google Chrome</strong>, <strong>Microsoft Edge</strong>, or <strong>Opera</strong>.</li>
+            <li><strong>Mobile Support:</strong> This tool generally does <strong>not</strong> work on mobile phones
+                (iOS/Android) due to browser limitations.</li>
+            <li><strong>Connection Required:</strong> You must click "Connect to Speaker" and select your Z407 device
+                for any controls to work.</li>
+            <li><strong>Source Mode:</strong> Audio and Bass controls only work when the speaker is in the correct
+                source mode (e.g., Bluetooth).</li>
+            <li><strong>Volume Control:</strong> The speakers do not have independent volume control (it adjusts the
+                source volume), but Bass control is independent.</li>
+        </ul>
+    </div>
+
     <p>
         <button id="connectBtn" style="width: auto;">1. Connect to Speaker</button>
     </p>
@@ -43,7 +105,7 @@
             <button id="switchUsbBtn">Switch to USB</button>
             <button id="pairingBtn">Enter Pairing Mode</button>
         </div>
-        
+
         <div class="controls-section">
             <h4>Auditory Cues</h4>
             <button id="sound1Btn">Sound 1</button>
@@ -74,155 +136,156 @@
     <h3>Status Log</h3>
     <pre id="log"></pre>
 
-<script>
-    // UUIDs from the protocol documentation
-    const SERVICE_UUID = '0000fdc2-0000-1000-8000-00805f9b34fb';
-    const COMMAND_UUID = 'c2e758b9-0e78-41e0-b0cb-98a593193fc5';
-    const RESPONSE_UUID = 'b84ac9c6-29c5-46d4-bba1-9d534784330f';
+    <script>
+        // UUIDs from the protocol documentation
+        const SERVICE_UUID = '0000fdc2-0000-1000-8000-00805f9b34fb';
+        const COMMAND_UUID = 'c2e758b9-0e78-41e0-b0cb-98a593193fc5';
+        const RESPONSE_UUID = 'b84ac9c6-29c5-46d4-bba1-9d534784330f';
 
-    // --- Complete Command Set ---
-    const COMMANDS = {
-        // Handshake
-        INITIATE: new Uint8Array([0x84, 0x05]),
-        ACKNOWLEDGE: new Uint8Array([0x84, 0x00]),
-        // Audio & Playback
-        VOLUME_UP: new Uint8Array([0x80, 0x02]),
-        VOLUME_DOWN: new Uint8Array([0x80, 0x03]),
-        BASS_UP: new Uint8Array([0x80, 0x00]),
-        BASS_DOWN: new Uint8Array([0x80, 0x01]),
-        PLAY_PAUSE: new Uint8Array([0x80, 0x04]),
-        NEXT_TRACK: new Uint8Array([0x80, 0x05]),
-        PREV_TRACK: new Uint8Array([0x80, 0x06]),
-        // Source Switching
-        SWITCH_BLUETOOTH: new Uint8Array([0x81, 0x01]),
-        SWITCH_AUX: new Uint8Array([0x81, 0x02]),
-        SWITCH_USB: new Uint8Array([0x81, 0x03]),
-        // Auditory Cues (Renamed)
-        SOUND_1: new Uint8Array([0x85, 0x02]), // Mode Switch Sound
-        SOUND_2: new Uint8Array([0x85, 0x01]), // Connect Sound
-        SOUND_3: new Uint8Array([0x85, 0x03]), // Fail/Disconnect Sound
-        // System
-        PAIRING: new Uint8Array([0x82, 0x00]),
-        FACTORY_RESET: new Uint8Array([0x83, 0x00]),
-    };
+        // --- Complete Command Set ---
+        const COMMANDS = {
+            // Handshake
+            INITIATE: new Uint8Array([0x84, 0x05]),
+            ACKNOWLEDGE: new Uint8Array([0x84, 0x00]),
+            // Audio & Playback
+            VOLUME_UP: new Uint8Array([0x80, 0x02]),
+            VOLUME_DOWN: new Uint8Array([0x80, 0x03]),
+            BASS_UP: new Uint8Array([0x80, 0x00]),
+            BASS_DOWN: new Uint8Array([0x80, 0x01]),
+            PLAY_PAUSE: new Uint8Array([0x80, 0x04]),
+            NEXT_TRACK: new Uint8Array([0x80, 0x05]),
+            PREV_TRACK: new Uint8Array([0x80, 0x06]),
+            // Source Switching
+            SWITCH_BLUETOOTH: new Uint8Array([0x81, 0x01]),
+            SWITCH_AUX: new Uint8Array([0x81, 0x02]),
+            SWITCH_USB: new Uint8Array([0x81, 0x03]),
+            // Auditory Cues (Renamed)
+            SOUND_1: new Uint8Array([0x85, 0x02]), // Mode Switch Sound
+            SOUND_2: new Uint8Array([0x85, 0x01]), // Connect Sound
+            SOUND_3: new Uint8Array([0x85, 0x03]), // Fail/Disconnect Sound
+            // System
+            PAIRING: new Uint8Array([0x82, 0x00]),
+            FACTORY_RESET: new Uint8Array([0x83, 0x00]),
+        };
 
-    // --- UI Elements ---
-    const connectButton = document.getElementById('connectBtn');
-    const controlsDiv = document.getElementById('controls');
-    const logElement = document.getElementById('log');
-    const advancedToggle = document.getElementById('advanced-toggle-checkbox');
-    const advancedControls = document.getElementById('advanced-controls');
+        // --- UI Elements ---
+        const connectButton = document.getElementById('connectBtn');
+        const controlsDiv = document.getElementById('controls');
+        const logElement = document.getElementById('log');
+        const advancedToggle = document.getElementById('advanced-toggle-checkbox');
+        const advancedControls = document.getElementById('advanced-controls');
 
-    let commandCharacteristic = null;
+        let commandCharacteristic = null;
 
-    function log(message) {
-        console.log(message);
-        logElement.textContent += `> ${message}\n`;
-        logElement.scrollTop = logElement.scrollHeight;
-    }
-
-    // --- Core Bluetooth Logic ---
-    connectButton.addEventListener('click', async () => {
-        if (!navigator.bluetooth) {
-            log('Web Bluetooth API is not available in this browser.');
-            return;
+        function log(message) {
+            console.log(message);
+            logElement.textContent += `> ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
         }
-        try {
-            log('Requesting Bluetooth device...');
-            const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID] }] });
-            log(`Device found: "${device.name}"`);
-            device.addEventListener('gattserverdisconnected', () => {
-                log('Device disconnected.');
-                controlsDiv.classList.add('hidden');
-                advancedControls.classList.add('hidden');
-                advancedToggle.checked = false;
-                commandCharacteristic = null;
-            });
-            const server = await device.gatt.connect();
-            log('GATT Server connected. Getting service...');
-            const service = await server.getPrimaryService(SERVICE_UUID);
-            const responseCharacteristic = await service.getCharacteristic(RESPONSE_UUID);
-            commandCharacteristic = await service.getCharacteristic(COMMAND_UUID);
-            
-            await responseCharacteristic.startNotifications();
-            log('Subscribed to notifications. Starting handshake...');
 
-            responseCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
-                const value = event.target.value;
-                const hexString = Array.from(new Uint8Array(value.buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-                log(`Received: 0x${hexString}`);
-
-                if (hexString === 'd40501') {
-                    log('Handshake Step 1/2 OK. Sending ACKNOWLEDGE...');
-                    commandCharacteristic.writeValueWithoutResponse(COMMANDS.ACKNOWLEDGE);
-                } else if (hexString === 'd40001' || hexString === 'd40003') {
-                    const successType = hexString === 'd40001' ? 'Standard' : 'Bonded Reconnect';
-                    log(`Handshake complete! (${successType}). Ready to send commands.`);
-                    controlsDiv.classList.remove('hidden');
-                }
-            });
-
-            await commandCharacteristic.writeValueWithoutResponse(COMMANDS.INITIATE);
-            log('Handshake Step 1/2: Sending INITIATE...');
-        } catch (error) {
-            log(`Error: ${error.message}`);
-        }
-    });
-    
-    // --- Command Sending Function ---
-    async function sendCommand(command) {
-        if (!commandCharacteristic) {
-            log('Not connected.');
-            return;
-        }
-        try {
-            await commandCharacteristic.writeValueWithoutResponse(command);
-        } catch (error) {
-            log(`Error sending command: ${error.message}`);
-        }
-    }
-
-    // --- Bind All Buttons ---
-    // Standard Controls
-    document.getElementById('volumeUpBtn').addEventListener('click', () => sendCommand(COMMANDS.VOLUME_UP));
-    document.getElementById('volumeDownBtn').addEventListener('click', () => sendCommand(COMMANDS.VOLUME_DOWN));
-    document.getElementById('bassUpBtn').addEventListener('click', () => sendCommand(COMMANDS.BASS_UP));
-    document.getElementById('bassDownBtn').addEventListener('click', () => sendCommand(COMMANDS.BASS_DOWN));
-    document.getElementById('playPauseBtn').addEventListener('click', () => sendCommand(COMMANDS.PLAY_PAUSE));
-    document.getElementById('nextTrackBtn').addEventListener('click', () => sendCommand(COMMANDS.NEXT_TRACK));
-    document.getElementById('prevTrackBtn').addEventListener('click', () => sendCommand(COMMANDS.PREV_TRACK));
-    document.getElementById('switchBluetoothBtn').addEventListener('click', () => sendCommand(COMMANDS.SWITCH_BLUETOOTH));
-    document.getElementById('switchAuxBtn').addEventListener('click', () => sendCommand(COMMANDS.SWITCH_AUX));
-    document.getElementById('switchUsbBtn').addEventListener('click', () => sendCommand(COMMANDS.SWITCH_USB));
-    document.getElementById('pairingBtn').addEventListener('click', () => sendCommand(COMMANDS.PAIRING));
-    document.getElementById('sound1Btn').addEventListener('click', () => sendCommand(COMMANDS.SOUND_1));
-    document.getElementById('sound2Btn').addEventListener('click', () => sendCommand(COMMANDS.SOUND_2));
-    document.getElementById('sound3Btn').addEventListener('click', () => sendCommand(COMMANDS.SOUND_3));
-
-    // Advanced Controls
-    advancedToggle.addEventListener('change', () => {
-        advancedControls.classList.toggle('hidden', !advancedToggle.checked);
-    });
-    
-    document.getElementById('factoryResetBtn').addEventListener('click', () => {
-        if (confirm("Are you sure you want to factory reset the speaker? This will unpair all devices.")) {
-            sendCommand(COMMANDS.FACTORY_RESET);
-        }
-    });
-
-    document.getElementById('custom-command-send').addEventListener('click', () => {
-        const input = document.getElementById('custom-command-input').value;
-        try {
-            const byteValues = input.replace(',', ' ').split(' ').filter(p => p).map(p => parseInt(p, 0));
-            if (byteValues.some(v => isNaN(v) || v < 0 || v > 255)) {
-                throw new Error("All values must be valid numbers between 0 and 255.");
+        // --- Core Bluetooth Logic ---
+        connectButton.addEventListener('click', async () => {
+            if (!navigator.bluetooth) {
+                log('Web Bluetooth API is not available in this browser.');
+                return;
             }
-            log(`Sending custom command: [${byteValues.join(', ')}]`);
-            sendCommand(new Uint8Array(byteValues));
-        } catch (e) {
-            alert(`Invalid command format. Please use comma or space-separated numbers (e.g., '128, 4' or '0x80 0x04').\n\nError: ${e.message}`);
+            try {
+                log('Requesting Bluetooth device...');
+                const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID] }] });
+                log(`Device found: "${device.name}"`);
+                device.addEventListener('gattserverdisconnected', () => {
+                    log('Device disconnected.');
+                    controlsDiv.classList.add('hidden');
+                    advancedControls.classList.add('hidden');
+                    advancedToggle.checked = false;
+                    commandCharacteristic = null;
+                });
+                const server = await device.gatt.connect();
+                log('GATT Server connected. Getting service...');
+                const service = await server.getPrimaryService(SERVICE_UUID);
+                const responseCharacteristic = await service.getCharacteristic(RESPONSE_UUID);
+                commandCharacteristic = await service.getCharacteristic(COMMAND_UUID);
+
+                await responseCharacteristic.startNotifications();
+                log('Subscribed to notifications. Starting handshake...');
+
+                responseCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
+                    const value = event.target.value;
+                    const hexString = Array.from(new Uint8Array(value.buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+                    log(`Received: 0x${hexString}`);
+
+                    if (hexString === 'd40501') {
+                        log('Handshake Step 1/2 OK. Sending ACKNOWLEDGE...');
+                        commandCharacteristic.writeValueWithoutResponse(COMMANDS.ACKNOWLEDGE);
+                    } else if (hexString === 'd40001' || hexString === 'd40003') {
+                        const successType = hexString === 'd40001' ? 'Standard' : 'Bonded Reconnect';
+                        log(`Handshake complete! (${successType}). Ready to send commands.`);
+                        controlsDiv.classList.remove('hidden');
+                    }
+                });
+
+                await commandCharacteristic.writeValueWithoutResponse(COMMANDS.INITIATE);
+                log('Handshake Step 1/2: Sending INITIATE...');
+            } catch (error) {
+                log(`Error: ${error.message}`);
+            }
+        });
+
+        // --- Command Sending Function ---
+        async function sendCommand(command) {
+            if (!commandCharacteristic) {
+                log('Not connected.');
+                return;
+            }
+            try {
+                await commandCharacteristic.writeValueWithoutResponse(command);
+            } catch (error) {
+                log(`Error sending command: ${error.message}`);
+            }
         }
-    });
-</script>
+
+        // --- Bind All Buttons ---
+        // Standard Controls
+        document.getElementById('volumeUpBtn').addEventListener('click', () => sendCommand(COMMANDS.VOLUME_UP));
+        document.getElementById('volumeDownBtn').addEventListener('click', () => sendCommand(COMMANDS.VOLUME_DOWN));
+        document.getElementById('bassUpBtn').addEventListener('click', () => sendCommand(COMMANDS.BASS_UP));
+        document.getElementById('bassDownBtn').addEventListener('click', () => sendCommand(COMMANDS.BASS_DOWN));
+        document.getElementById('playPauseBtn').addEventListener('click', () => sendCommand(COMMANDS.PLAY_PAUSE));
+        document.getElementById('nextTrackBtn').addEventListener('click', () => sendCommand(COMMANDS.NEXT_TRACK));
+        document.getElementById('prevTrackBtn').addEventListener('click', () => sendCommand(COMMANDS.PREV_TRACK));
+        document.getElementById('switchBluetoothBtn').addEventListener('click', () => sendCommand(COMMANDS.SWITCH_BLUETOOTH));
+        document.getElementById('switchAuxBtn').addEventListener('click', () => sendCommand(COMMANDS.SWITCH_AUX));
+        document.getElementById('switchUsbBtn').addEventListener('click', () => sendCommand(COMMANDS.SWITCH_USB));
+        document.getElementById('pairingBtn').addEventListener('click', () => sendCommand(COMMANDS.PAIRING));
+        document.getElementById('sound1Btn').addEventListener('click', () => sendCommand(COMMANDS.SOUND_1));
+        document.getElementById('sound2Btn').addEventListener('click', () => sendCommand(COMMANDS.SOUND_2));
+        document.getElementById('sound3Btn').addEventListener('click', () => sendCommand(COMMANDS.SOUND_3));
+
+        // Advanced Controls
+        advancedToggle.addEventListener('change', () => {
+            advancedControls.classList.toggle('hidden', !advancedToggle.checked);
+        });
+
+        document.getElementById('factoryResetBtn').addEventListener('click', () => {
+            if (confirm("Are you sure you want to factory reset the speaker? This will unpair all devices.")) {
+                sendCommand(COMMANDS.FACTORY_RESET);
+            }
+        });
+
+        document.getElementById('custom-command-send').addEventListener('click', () => {
+            const input = document.getElementById('custom-command-input').value;
+            try {
+                const byteValues = input.replace(',', ' ').split(' ').filter(p => p).map(p => parseInt(p, 0));
+                if (byteValues.some(v => isNaN(v) || v < 0 || v > 255)) {
+                    throw new Error("All values must be valid numbers between 0 and 255.");
+                }
+                log(`Sending custom command: [${byteValues.join(', ')}]`);
+                sendCommand(new Uint8Array(byteValues));
+            } catch (e) {
+                alert(`Invalid command format. Please use comma or space-separated numbers (e.g., '128, 4' or '0x80 0x04').\n\nError: ${e.message}`);
+            }
+        });
+    </script>
 </body>
+
 </html>
