@@ -4,16 +4,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Z407 3D Puck</title>
+    <title>Z407 Control Dial</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #e0e5ec;
-            --text: #555;
+            /* Lively Light Theme (Default) */
+            --bg: #e6eef5;
+            --surface: #e6eef5;
+            --text: #4a5568;
             --shadow-light: #ffffff;
-            --shadow-dark: #a3b1c6;
+            --shadow-dark: #a6b0c3;
             --accent: #6d5dfc;
-            --puck-size: 340px;
+            --dial-size: 360px;
+            --led-off: #ccc;
+        }
+
+        [data-theme="dark"] {
+            /* Logitech-inspired Dark Theme */
+            --bg: #121212;
+            --surface: #1a1a1a;
+            --text: #e0e0e0;
+            --shadow-light: #2a2a2a;
+            --shadow-dark: #050505;
+            --accent: #00B8FC;
+            /* Electric Blue */
+            --led-off: #444;
         }
 
         body {
@@ -28,302 +43,398 @@
             margin: 0;
             overflow: hidden;
             perspective: 1000px;
-            /* For 3D tilt effect */
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        /* --- The Main Puck Container --- */
-        .puck-wrapper {
-            position: relative;
-            width: var(--puck-size);
-            height: var(--puck-size);
-            border-radius: 50%;
-            background: var(--bg);
-            /* Deep soft shadow for "floating" effect */
-            box-shadow: 20px 20px 60px var(--shadow-dark),
-                -20px -20px 60px var(--shadow-light);
+        /* --- Top Bar Controls --- */
+        .top-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
-            /* Subtle texture/gradient on the face */
-            background: linear-gradient(145deg, #f0f5fc, #cacfd6);
+            gap: 10px;
+            z-index: 200;
         }
 
-        /* Inner ring to separate edge from controls */
-        .puck-inner-ring {
-            width: 85%;
-            height: 85%;
-            border-radius: 50%;
-            /* Inset shadow to create a "dish" or recessed look */
-            box-shadow: inset 8px 8px 16px var(--shadow-dark),
-                inset -8px -8px 16px var(--shadow-light);
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* --- Control Layout --- */
-
-        /* Center Dial (Volume/Play) */
-        .center-dial {
-            width: 50%;
-            height: 50%;
-            border-radius: 50%;
-            background: var(--bg);
-            /* Pop it back out */
-            box-shadow: 6px 6px 12px var(--shadow-dark),
-                -6px -6px 12px var(--shadow-light);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-            cursor: grab;
-            position: relative;
-        }
-
-        .center-dial:active {
-            cursor: grabbing;
-        }
-
-        .play-btn {
-            width: 60%;
-            height: 60%;
-            border-radius: 50%;
+        .icon-btn {
+            background: var(--surface);
             border: none;
-            background: var(--bg);
-            color: var(--text);
-            font-size: 1.5rem;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
             cursor: pointer;
-            /* Flat/Subtle state */
-            box-shadow: 3px 3px 6px var(--shadow-dark),
-                -3px -3px 6px var(--shadow-light);
-            transition: all 0.1s;
+            color: var(--text);
+            font-size: 1.2rem;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 5px 5px 10px var(--shadow-dark),
+                -5px -5px 10px var(--shadow-light);
+            transition: all 0.2s;
         }
 
-        .play-btn:active {
+        .icon-btn:active,
+        .icon-btn.active {
             box-shadow: inset 3px 3px 6px var(--shadow-dark),
                 inset -3px -3px 6px var(--shadow-light);
             color: var(--accent);
         }
 
-        /* Buttons arranged in the "Dish" */
-        .satellite-btn {
+        /* --- Main Container --- */
+        .control-unit {
+            position: relative;
+            width: var(--dial-size);
+            height: var(--dial-size);
+            border-radius: 50%;
+            background: var(--surface);
+            box-shadow: 20px 20px 60px var(--shadow-dark),
+                -20px -20px 60px var(--shadow-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s ease-out, box-shadow 0.3s;
+        }
+
+        /* --- Outer Volume Ring --- */
+        .volume-ring {
             position: absolute;
-            width: 40px;
-            height: 40px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            /* Flat look, no gradient needed if we want clean */
+            background: var(--surface);
+            z-index: 1;
+            cursor: grab;
+        }
+
+        /* Marker */
+        .volume-ring::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+
+        .volume-ring:active {
+            cursor: grabbing;
+        }
+
+        /* --- Inner Static Zone (Buttons) --- */
+        .inner-zone {
+            position: absolute;
+            width: 68%;
+            height: 68%;
+            border-radius: 50%;
+            background: var(--surface);
+            z-index: 2;
+            /* Removed inset shadow for flatter look */
+            /* box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- Center Play Button --- */
+        .center-btn {
+            width: 38%;
+            height: 38%;
             border-radius: 50%;
             border: none;
-            background: var(--bg);
+            background: var(--surface);
             color: var(--text);
-            font-size: 0.9rem;
+            font-size: 2rem;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 6px 6px 12px var(--shadow-dark),
+                -6px -6px 12px var(--shadow-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s;
+        }
+
+        .center-btn:active {
+            box-shadow: inset 3px 3px 6px var(--shadow-dark),
+                inset -3px -3px 6px var(--shadow-light);
+            color: var(--accent);
+        }
+
+        /* --- Radial Buttons --- */
+        .radial-btn {
+            position: absolute;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            background: var(--surface);
+            color: var(--text);
+            font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            /* Small pop-out */
             box-shadow: 4px 4px 8px var(--shadow-dark),
                 -4px -4px 8px var(--shadow-light);
             transition: transform 0.1s, box-shadow 0.1s;
         }
 
-        .satellite-btn:active {
-            box-shadow: inset 2px 2px 5px var(--shadow-dark),
-                inset -2px -2px 5px var(--shadow-light);
+        .radial-btn:active {
+            box-shadow: inset 2px 2px 4px var(--shadow-dark),
+                inset -2px -2px 4px var(--shadow-light);
             color: var(--accent);
             transform: scale(0.95);
         }
 
-        /* Positioning - Using polar-like coordinates via absolute/transform */
-        /* Top: Sources */
+        /* Positioning */
         .pos-top {
-            top: 10%;
+            top: 10px;
             left: 50%;
             transform: translateX(-50%);
         }
 
+        /* BT */
         .pos-top-left {
-            top: 20%;
-            left: 20%;
+            top: 35px;
+            left: 35px;
         }
 
+        /* AUX */
         .pos-top-right {
-            top: 20%;
-            right: 20%;
+            top: 35px;
+            right: 35px;
         }
 
-        /* Bottom: Bass */
+        /* USB */
+
         .pos-bottom {
-            bottom: 10%;
+            bottom: 10px;
             left: 50%;
             transform: translateX(-50%);
         }
 
         /* Pair */
         .pos-bottom-left {
-            bottom: 20%;
-            left: 20%;
+            bottom: 35px;
+            left: 35px;
         }
 
+        /* Bass - */
         .pos-bottom-right {
-            bottom: 20%;
-            right: 20%;
+            bottom: 35px;
+            right: 35px;
         }
 
-        /* Sides: Tracks */
+        /* Bass + */
+
         .pos-left {
             top: 50%;
-            left: 8%;
+            left: 5px;
             transform: translateY(-50%);
         }
 
         .pos-right {
             top: 50%;
-            right: 8%;
+            right: 5px;
             transform: translateY(-50%);
         }
 
 
-        /* --- Status & Overlay --- */
-        .status-led {
-            position: absolute;
-            top: -30px;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: #ccc;
-            box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.2);
-            transition: background-color 0.3s;
-        }
-
-        .status-led.connected {
-            background-color: var(--accent);
-            box-shadow: 0 0 8px var(--accent);
-        }
-
+        /* --- Overlay --- */
         .overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(224, 229, 236, 0.9);
+            background: rgba(224, 229, 236, 0.2);
+            /* Very subtle */
+            backdrop-filter: blur(4px);
             z-index: 100;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: opacity 0.3s;
+            transition: opacity 0.3s, visibility 0.3s;
         }
 
         .overlay.hidden {
             opacity: 0;
+            visibility: hidden;
             pointer-events: none;
         }
 
-        .big-btn {
+        .connect-btn {
             padding: 15px 40px;
             border-radius: 30px;
             border: none;
-            background: var(--bg);
+            background: var(--surface);
             color: var(--text);
-            font-size: 1.2rem;
             font-weight: 600;
+            font-size: 1.1rem;
             cursor: pointer;
             box-shadow: 8px 8px 16px var(--shadow-dark),
                 -8px -8px 16px var(--shadow-light);
+            transition: all 0.2s;
         }
 
-        .big-btn:active {
-            box-shadow: inset 4px 4px 8px var(--shadow-dark),
-                inset -4px -4px 8px var(--shadow-light);
+        .connect-btn:active {
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            color: var(--accent);
         }
 
-        /* Small labels for clarity */
-        .label {
+        .status-led {
             position: absolute;
-            font-size: 0.6rem;
-            opacity: 0.5;
-            pointer-events: none;
+            top: -40px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--led-off);
+            transition: background 0.3s, box-shadow 0.3s;
         }
 
-        .lbl-src {
-            top: 25px;
-        }
-
-        .lbl-bass {
-            bottom: 25px;
+        .status-led.connected {
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
         }
     </style>
 </head>
 
 <body>
 
-    <div id="overlay" class="overlay">
-        <h1 style="margin-bottom: 2rem; color: #444;">Z407 PUCK</h1>
-        <button id="connectBtn" class="big-btn">CONNECT</button>
+    <div class="top-controls">
+        <button id="themeBtn" class="icon-btn" title="Toggle Theme">◑</button>
+        <button id="devBtn" class="icon-btn" title="Dev Mode (Bypass Connect)">🛠</button>
     </div>
 
-    <div class="status-led" id="led"></div>
+    <div id="overlay" class="overlay">
+        <button id="connectBtn" class="connect-btn">CONNECT SPEAKER</button>
+    </div>
 
-    <div class="puck-wrapper" id="puck">
-        <div class="puck-inner-ring">
+    <div class="control-unit" id="controlUnit">
+        <div class="status-led" id="led"></div>
 
-            <!-- Labels -->
-            <span class="label lbl-src">SOURCE</span>
-            <span class="label lbl-bass">BASS</span>
+        <!-- Outer Ring (Rotates) -->
+        <div class="volume-ring" id="volumeRing"></div>
 
-            <!-- Top: Source Controls -->
-            <button id="btn-bt" class="satellite-btn pos-top" title="Bluetooth">BT</button>
-            <button id="btn-aux" class="satellite-btn pos-top-left" title="AUX">AUX</button>
-            <button id="btn-usb" class="satellite-btn pos-top-right" title="USB">USB</button>
+        <!-- Inner Zone (Static) -->
+        <div class="inner-zone">
 
-            <!-- Sides: Track Controls -->
-            <button id="btn-prev" class="satellite-btn pos-left" title="Previous">⏮</button>
-            <button id="btn-next" class="satellite-btn pos-right" title="Next">⏭</button>
+            <!-- Center -->
+            <button id="btn-play" class="center-btn" title="Play/Pause">⏯</button>
 
-            <!-- Bottom: Bass & Pair -->
-            <button id="btn-pair" class="satellite-btn pos-bottom" title="Pairing">∞</button>
-            <button id="btn-bass-down" class="satellite-btn pos-bottom-left" title="Bass Down">-</button>
-            <button id="btn-bass-up" class="satellite-btn pos-bottom-right" title="Bass Up">+</button>
+            <!-- Surrounding Buttons -->
+            <button id="btn-bt" class="radial-btn pos-top" title="Bluetooth">BT</button>
+            <button id="btn-aux" class="radial-btn pos-top-left" title="AUX">AUX</button>
+            <button id="btn-usb" class="radial-btn pos-top-right" title="USB">USB</button>
 
-            <!-- Center: Volume Knob & Play -->
-            <div class="center-dial" id="volumeKnob">
-                <button id="btn-play" class="play-btn" title="Play/Pause">⏯</button>
-            </div>
+            <button id="btn-prev" class="radial-btn pos-left" title="Previous">⏮</button>
+            <button id="btn-next" class="radial-btn pos-right" title="Next">⏭</button>
+
+            <button id="btn-pair" class="radial-btn pos-bottom" title="Pairing">∞</button>
+            <button id="btn-bass-down" class="radial-btn pos-bottom-left" title="Bass -">-</button>
+            <button id="btn-bass-up" class="radial-btn pos-bottom-right" title="Bass +">+</button>
 
         </div>
     </div>
 
     <script>
-        // --- 3D Tilt Effect (Subtle JS) ---
-        const puck = document.getElementById('puck');
-
-        document.addEventListener('mousemove', (e) => {
-            const { clientX, clientY } = e;
-            const { innerWidth, innerHeight } = window;
-
-            // Calculate percentage from center (-1 to 1)
-            const x = (clientX / innerWidth - 0.5) * 2;
-            const y = (clientY / innerHeight - 0.5) * 2;
-
-            // Subtle tilt: max 10 degrees
-            // Move shadow in opposite direction
-            puck.style.transform = `rotateX(${-y * 10}deg) rotateY(${x * 10}deg)`;
-
-            // Dynamic Shadow
-            const shadowX = -x * 30;
-            const shadowY = -y * 30;
-            puck.style.boxShadow = `${20 + shadowX}px ${20 + shadowY}px 60px var(--shadow-dark), 
-                                ${-20 + shadowX}px ${-20 + shadowY}px 60px var(--shadow-light)`;
+        // --- Theme Logic ---
+        const themeBtn = document.getElementById('themeBtn');
+        themeBtn.addEventListener('click', () => {
+            const body = document.body;
+            const isDark = body.getAttribute('data-theme') === 'dark';
+            body.setAttribute('data-theme', isDark ? 'light' : 'dark');
         });
 
+        // --- Dev Mode Logic ---
+        const devBtn = document.getElementById('devBtn');
+        let devMode = false;
+        devBtn.addEventListener('click', () => {
+            devMode = !devMode;
+            devBtn.classList.toggle('active', devMode);
 
-        // --- Bluetooth Logic (Same as before) ---
+            if (devMode) {
+                // Fake connection
+                document.getElementById('overlay').classList.add('hidden');
+                document.getElementById('led').classList.add('connected');
+                console.log("Dev Mode: Enabled");
+            } else {
+                // Disconnect if not actually connected
+                if (!commandCharacteristic) {
+                    document.getElementById('overlay').classList.remove('hidden');
+                    document.getElementById('led').classList.remove('connected');
+                }
+                console.log("Dev Mode: Disabled");
+            }
+        });
+
+        // --- 3D Tilt ---
+        const unit = document.getElementById('controlUnit');
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 2;
+            const y = (e.clientY / window.innerHeight - 0.5) * 2;
+            unit.style.transform = `rotateX(${-y * 3}deg) rotateY(${x * 3}deg)`;
+        });
+
+        // --- Volume Ring Logic ---
+        const ring = document.getElementById('volumeRing');
+        let isDragging = false;
+        let startAngle = 0;
+        let currentRotation = 0;
+        let lastSentRotation = 0;
+
+        function getAngle(x, y, cx, cy) {
+            return Math.atan2(y - cy, x - cx) * 180 / Math.PI;
+        }
+
+        const startDrag = (e) => {
+            isDragging = true;
+            const rect = ring.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            startAngle = getAngle(clientX, clientY, cx, cy) - currentRotation;
+            e.preventDefault();
+        };
+
+        const drag = (e) => {
+            if (!isDragging) return;
+            const rect = ring.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            currentRotation = getAngle(clientX, clientY, cx, cy) - startAngle;
+            ring.style.transform = `rotate(${currentRotation}deg)`;
+
+            const delta = currentRotation - lastSentRotation;
+            if (delta > 15) { send(COMMANDS.VOLUME_UP); lastSentRotation = currentRotation; }
+            else if (delta < -15) { send(COMMANDS.VOLUME_DOWN); lastSentRotation = currentRotation; }
+        };
+
+        const endDrag = () => { isDragging = false; };
+
+        ring.addEventListener('mousedown', startDrag);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', endDrag);
+        ring.addEventListener('touchstart', startDrag);
+        document.addEventListener('touchmove', drag);
+        document.addEventListener('touchend', endDrag);
+
+
+        // --- Bluetooth Logic ---
         const SERVICE_UUID = '0000fdc2-0000-1000-8000-00805f9b34fb';
         const COMMAND_UUID = 'c2e758b9-0e78-41e0-b0cb-98a593193fc5';
         const RESPONSE_UUID = 'b84ac9c6-29c5-46d4-bba1-9d534784330f';
@@ -353,8 +464,10 @@
             try {
                 const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID] }] });
                 device.addEventListener('gattserverdisconnected', () => {
-                    overlay.classList.remove('hidden');
-                    led.classList.remove('connected');
+                    if (!devMode) {
+                        overlay.classList.remove('hidden');
+                        led.classList.remove('connected');
+                    }
                     commandCharacteristic = null;
                 });
 
@@ -378,60 +491,23 @@
         }
 
         async function send(cmd) {
-            if (commandCharacteristic) await commandCharacteristic.writeValueWithoutResponse(cmd);
+            if (commandCharacteristic) {
+                await commandCharacteristic.writeValueWithoutResponse(cmd);
+            } else if (devMode) {
+                console.log("Dev Mode: Command Sent", cmd);
+                // Visual feedback in dev mode
+                led.style.boxShadow = '0 0 20px var(--accent)';
+                setTimeout(() => led.style.boxShadow = '0 0 10px var(--accent)', 100);
+            } else {
+                led.style.backgroundColor = '#e53e3e';
+                setTimeout(() => led.style.backgroundColor = 'var(--led-off)', 200);
+            }
         }
-
-        // --- Knob Rotation Logic ---
-        let isDragging = false;
-        let startAngle = 0;
-        let currentRotation = 0;
-        let lastSentRotation = 0;
-        const knob = document.getElementById('volumeKnob');
-
-        function getAngle(x, y, cx, cy) {
-            return Math.atan2(y - cy, x - cx) * 180 / Math.PI;
-        }
-
-        const startDrag = (e) => {
-            isDragging = true;
-            const rect = knob.getBoundingClientRect();
-            const cx = rect.left + rect.width / 2;
-            const cy = rect.top + rect.height / 2;
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            startAngle = getAngle(clientX, clientY, cx, cy) - currentRotation;
-            e.preventDefault(); // Stop text selection
-        };
-
-        const drag = (e) => {
-            if (!isDragging) return;
-            const rect = knob.getBoundingClientRect();
-            const cx = rect.left + rect.width / 2;
-            const cy = rect.top + rect.height / 2;
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-            currentRotation = getAngle(clientX, clientY, cx, cy) - startAngle;
-            knob.style.transform = `rotate(${currentRotation}deg)`;
-
-            const delta = currentRotation - lastSentRotation;
-            if (delta > 15) { send(COMMANDS.VOLUME_UP); lastSentRotation = currentRotation; }
-            else if (delta < -15) { send(COMMANDS.VOLUME_DOWN); lastSentRotation = currentRotation; }
-        };
-
-        const endDrag = () => { isDragging = false; };
-
-        knob.addEventListener('mousedown', startDrag);
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', endDrag);
-        knob.addEventListener('touchstart', startDrag);
-        document.addEventListener('touchmove', drag);
-        document.addEventListener('touchend', endDrag);
 
         // --- Bindings ---
         document.getElementById('connectBtn').addEventListener('click', connect);
         const bind = (id, cmd) => document.getElementById(id).addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent knob drag
+            e.stopPropagation();
             send(cmd);
         });
 
