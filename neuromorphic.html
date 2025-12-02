@@ -4,523 +4,589 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Z407 Control Dial</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <title>Z407 Neuro-Puck</title>
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* =========================================
+           1. DESIGN SYSTEM
+           ========================================= */
         :root {
-            /* Lively Light Theme (Default) */
-            --bg: #e6eef5;
-            --surface: #e6eef5;
-            --text: #4a5568;
-            --shadow-light: #ffffff;
-            --shadow-dark: #a6b0c3;
-            --accent: #6d5dfc;
-            --dial-size: 360px;
-            --led-off: #ccc;
+            --bg-color: #2b2e4a;
+            --panel-color: #2b2e4a;
+            --key-color: #35395b;
+
+            /* Lighting Engine */
+            --shadow-light: rgba(255, 255, 255, 0.06);
+            --shadow-dark: rgba(0, 0, 0, 0.5);
+
+            /* Accents */
+            --text-color: #8d93ab;
+            --accent-color: #7d83ff;
+            --danger-color: #ff5555;
+
+            /* Dimensions */
+            --rect-width: 360px;
+            --rect-height: 180px;
+            --circle-size: 220px;
         }
 
-        [data-theme="dark"] {
-            /* Logitech-inspired Dark Theme */
-            --bg: #121212;
-            --surface: #1a1a1a;
-            --text: #e0e0e0;
-            --shadow-light: #2a2a2a;
-            --shadow-dark: #050505;
-            --accent: #00B8FC;
-            /* Electric Blue */
-            --led-off: #444;
+        /* Base Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            user-select: none;
         }
 
         body {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             min-height: 100vh;
-            margin: 0;
-            overflow: hidden;
-            perspective: 1000px;
-            transition: background-color 0.3s, color 0.3s;
         }
 
-        /* --- Top Bar Controls --- */
-        .top-controls {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-            z-index: 200;
-        }
-
-        .icon-btn {
-            background: var(--surface);
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            cursor: pointer;
-            color: var(--text);
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 5px 5px 10px var(--shadow-dark),
-                -5px -5px 10px var(--shadow-light);
-            transition: all 0.2s;
-        }
-
-        .icon-btn:active,
-        .icon-btn.active {
-            box-shadow: inset 3px 3px 6px var(--shadow-dark),
-                inset -3px -3px 6px var(--shadow-light);
-            color: var(--accent);
-        }
-
-        /* --- Main Container --- */
-        .control-unit {
-            position: relative;
-            width: var(--dial-size);
-            height: var(--dial-size);
-            border-radius: 50%;
-            background: var(--surface);
-            box-shadow: 20px 20px 60px var(--shadow-dark),
-                -20px -20px 60px var(--shadow-light);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.1s ease-out, box-shadow 0.3s;
-        }
-
-        /* --- Outer Volume Ring --- */
-        .volume-ring {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            /* Flat look, no gradient needed if we want clean */
-            background: var(--surface);
-            z-index: 1;
-            cursor: grab;
-        }
-
-        /* Marker */
-        .volume-ring::after {
-            content: '';
-            position: absolute;
-            top: 15px;
-            left: 50%;
-            transform: translateX(-50%);
+        /* Custom Scrollbar for the Log */
+        ::-webkit-scrollbar {
             width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--accent);
-            box-shadow: 0 0 8px var(--accent);
-            transition: background 0.3s, box-shadow 0.3s;
         }
 
-        .volume-ring:active {
-            cursor: grabbing;
+        ::-webkit-scrollbar-track {
+            background: #151624;
+            border-radius: 4px;
         }
 
-        /* --- Inner Static Zone (Buttons) --- */
-        .inner-zone {
-            position: absolute;
-            width: 68%;
-            height: 68%;
-            border-radius: 50%;
-            background: var(--surface);
-            z-index: 2;
-            /* Removed inset shadow for flatter look */
-            /* box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); */
+        ::-webkit-scrollbar-thumb {
+            background: #35395b;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
+        }
+
+        /* Logic Toggle */
+        #adv-toggle {
+            display: none;
+        }
+
+        /* =========================================
+           2. MAIN UNIT (Top Layer - Z-Index 100)
+           ========================================= */
+        .wrapper {
+            position: relative;
             display: flex;
             align-items: center;
-            justify-content: center;
-        }
-
-        /* --- Center Play Button --- */
-        .center-btn {
-            width: 38%;
-            height: 38%;
-            border-radius: 50%;
-            border: none;
-            background: var(--surface);
-            color: var(--text);
-            font-size: 2rem;
-            cursor: pointer;
-            z-index: 10;
-            box-shadow: 6px 6px 12px var(--shadow-dark),
-                -6px -6px 12px var(--shadow-light);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.1s;
-        }
-
-        .center-btn:active {
-            box-shadow: inset 3px 3px 6px var(--shadow-dark),
-                inset -3px -3px 6px var(--shadow-light);
-            color: var(--accent);
-        }
-
-        /* --- Radial Buttons --- */
-        .radial-btn {
-            position: absolute;
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            border: none;
-            background: var(--surface);
-            color: var(--text);
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 4px 4px 8px var(--shadow-dark),
-                -4px -4px 8px var(--shadow-light);
-            transition: transform 0.1s, box-shadow 0.1s;
-        }
-
-        .radial-btn:active {
-            box-shadow: inset 2px 2px 4px var(--shadow-dark),
-                inset -2px -2px 4px var(--shadow-light);
-            color: var(--accent);
-            transform: scale(0.95);
-        }
-
-        /* Positioning */
-        .pos-top {
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        /* BT */
-        .pos-top-left {
-            top: 35px;
-            left: 35px;
-        }
-
-        /* AUX */
-        .pos-top-right {
-            top: 35px;
-            right: 35px;
-        }
-
-        /* USB */
-
-        .pos-bottom {
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        /* Pair */
-        .pos-bottom-left {
-            bottom: 35px;
-            left: 35px;
-        }
-
-        /* Bass - */
-        .pos-bottom-right {
-            bottom: 35px;
-            right: 35px;
-        }
-
-        /* Bass + */
-
-        .pos-left {
-            top: 50%;
-            left: 5px;
-            transform: translateY(-50%);
-        }
-
-        .pos-right {
-            top: 50%;
-            right: 5px;
-            transform: translateY(-50%);
-        }
-
-
-        /* --- Overlay --- */
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(224, 229, 236, 0.2);
-            /* Very subtle */
-            backdrop-filter: blur(4px);
+            margin-left: -40px;
             z-index: 100;
+            /* Stays ON TOP of the drawer */
+        }
+
+        /* --- LEFT PANEL --- */
+        .panel-left {
+            width: var(--rect-width);
+            height: var(--rect-height);
+            background: var(--panel-color);
+            border-radius: 12px 0 0 12px;
+
+            /* Shadow casts DOWN onto the drawer, but not Right */
+            box-shadow: -10px -10px 20px var(--shadow-light), -5px 15px 25px var(--shadow-dark);
+
+            padding: 12px 80px 12px 12px;
+            margin-right: -55px;
+            z-index: 5;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.3s, visibility 0.3s;
+            justify-content: space-between;
+            position: relative;
         }
 
-        .overlay.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
+        /* Track Controls */
+        .track-row {
+            display: flex;
+            gap: 8px;
+            height: 45px;
+            margin-bottom: 6px;
         }
 
-        .connect-btn {
-            padding: 15px 40px;
-            border-radius: 30px;
+        .track-btn {
+            flex: 1;
+            height: 100%;
+            background: var(--bg-color);
             border: none;
-            background: var(--surface);
-            color: var(--text);
-            font-weight: 600;
+            border-radius: 8px;
+            color: var(--text-color);
             font-size: 1.1rem;
             cursor: pointer;
-            box-shadow: 8px 8px 16px var(--shadow-dark),
-                -8px -8px 16px var(--shadow-light);
-            transition: all 0.2s;
+            box-shadow: 5px 5px 10px var(--shadow-dark), -2px -2px 10px var(--shadow-light);
+            transition: 0.1s;
         }
 
-        .connect-btn:active {
-            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
-            color: var(--accent);
+        .track-btn:active {
+            box-shadow: inset 3px 3px 7px var(--shadow-dark), inset -3px -3px 7px var(--shadow-light);
+            transform: translateY(1px);
+            color: var(--accent-color);
         }
 
-        .status-led {
+        .track-btn.play {
+            flex: 1.2;
+            color: var(--accent-color);
+            font-size: 1.3rem;
+        }
+
+        /* Radio Deck */
+        .radio-deck {
+            display: flex;
+            gap: 5px;
+            background: rgba(0, 0, 0, 0.2);
+            box-shadow: inset 2px 2px 8px var(--shadow-dark);
+            padding: 4px;
+            border-radius: 8px;
+            flex: 1;
+        }
+
+        /* Keys */
+        .radio-deck input {
+            display: none;
+        }
+
+        .key-label {
+            flex: 1;
+            background: var(--key-color);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            position: relative;
+            padding-bottom: 4px;
+        }
+
+        .key-label .back-side {
             position: absolute;
-            top: -40px;
-            width: 8px;
+            top: -6px;
+            width: 100%;
             height: 8px;
-            border-radius: 50%;
-            background: var(--led-off);
-            transition: background 0.3s, box-shadow 0.3s;
+            background: var(--key-color);
+            border-radius: 3px 3px 0 0;
+            transform: perspective(200px) rotateX(45deg);
+            opacity: 0.5;
         }
 
-        .status-led.connected {
-            background: var(--accent);
-            box-shadow: 0 0 10px var(--accent);
+        /* Active Key */
+        .key-label:has(input:checked) {
+            transform: perspective(200px) rotateX(-15deg);
+            margin-top: 6px;
+            border-top: 1px solid var(--accent-color);
+            background: #272a45;
+            box-shadow: inset 0px -10px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .key-label:has(input:checked) .back-side {
+            opacity: 1;
+        }
+
+        .key-label .icon {
+            font-size: 1.1rem;
+            transition: 0.2s;
+        }
+
+        .key-label:has(input:checked) .icon {
+            color: var(--accent-color);
+            text-shadow: 0 0 10px var(--accent-color);
+        }
+
+        .key-label .light-bar {
+            width: 50%;
+            height: 3px;
+            background: #222;
+            border-radius: 2px;
+            margin-top: 2px;
+        }
+
+        .key-label:has(input:checked) .light-bar {
+            background: var(--accent-color);
+            box-shadow: 0 0 6px var(--accent-color);
+        }
+
+        /* Control Bar (Hanging) */
+        .control-bar {
+            position: absolute;
+            bottom: -35px;
+            right: 60px;
+            width: 180px;
+            height: 40px;
+            background: #35395b;
+            /* Distinct material */
+            border-radius: 0 0 12px 12px;
+            display: flex;
+            padding: 4px;
+            gap: 6px;
+
+            /* Shadow casts DOWN onto the Drawer */
+            box-shadow: 0 15px 20px var(--shadow-dark);
+            z-index: 20;
+            /* Higher than Drawer */
+        }
+
+        .bar-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+            box-shadow: 2px 2px 5px var(--shadow-dark);
+            transition: 0.2s;
+        }
+
+        .bar-btn:hover {
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .bar-btn:active {
+            box-shadow: inset 1px 1px 3px var(--shadow-dark);
+            transform: translateY(1px);
+        }
+
+        /* Advanced Active State */
+        #adv-toggle:checked~.wrapper .control-bar label[for="adv-toggle"] {
+            color: var(--accent-color);
+            box-shadow: inset 2px 2px 5px var(--shadow-dark);
+        }
+
+        /* --- RIGHT PANEL (Circle) --- */
+        .panel-right {
+            width: var(--circle-size);
+            height: var(--circle-size);
+            background: var(--bg-color);
+            border-radius: 50%;
+            z-index: 10;
+
+            /* Shadow Configuration */
+            box-shadow: 10px 10px 25px var(--shadow-dark), -5px -5px 20px var(--shadow-light);
+
+            /* Physical Edge Definition */
+            border: 4px solid var(--bg-color);
+            border-left: 1px solid rgba(0, 0, 0, 0.3);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .dial-container {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 5px;
+            box-shadow: inset 3px 3px 10px rgba(0, 0, 0, 0.5), inset -3px -3px 10px rgba(255, 255, 255, 0.05);
+        }
+
+        .dial-btn {
+            background: var(--bg-color);
+            border: none;
+            cursor: pointer;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: inset 1px 1px 3px var(--shadow-light), inset -1px -1px 3px var(--shadow-dark);
+        }
+
+        .dial-btn:active {
+            color: var(--accent-color);
+            box-shadow: inset 3px 3px 8px var(--shadow-dark);
+        }
+
+        /* Radial Centering */
+        .dial-btn i {
+            font-size: 2.2rem;
+            margin-bottom: 0px;
+        }
+
+        .dial-btn:nth-child(1) {
+            border-radius: 100% 0 0 0;
+            justify-content: flex-end;
+            align-items: flex-end;
+            padding: 0 25px 20px 0;
+        }
+
+        .dial-btn:nth-child(2) {
+            border-radius: 0 100% 0 0;
+            justify-content: flex-end;
+            align-items: flex-start;
+            padding: 0 0 20px 25px;
+        }
+
+        .dial-btn:nth-child(3) {
+            border-radius: 0 0 0 100%;
+            justify-content: flex-start;
+            align-items: flex-end;
+            padding: 20px 25px 0 0;
+        }
+
+        .dial-btn:nth-child(4) {
+            border-radius: 0 0 100% 0;
+            justify-content: flex-start;
+            align-items: flex-start;
+            padding: 20px 0 0 24px;
+        }
+
+
+        /* =========================================
+           3. ADVANCED DRAWER (Bottom Layer - Z-Index 50)
+           ========================================= */
+        .drawer-wrapper {
+            width: 500px;
+            margin-left: -50px;
+            overflow: hidden;
+
+            /* Start hidden */
+            max-height: 0;
+            opacity: 0;
+
+            /* 
+               PADDING TOP: Creates space so the drawer starts "below" the control bar visually
+               MARGIN TOP: Pulls the whole container up so it slides from underneath
+            */
+            padding-top: 40px;
+            margin-top: -20px;
+
+            transition: max-height 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease;
+
+            z-index: 50;
+            /* BELOW the main wrapper */
+            position: relative;
+        }
+
+        .advanced-drawer {
+            background: var(--bg-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+
+            /* Dark shadow to separate from background */
+            box-shadow: 0px 15px 30px var(--shadow-dark);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        #adv-toggle:checked~.drawer-wrapper {
+            max-height: 500px;
+            opacity: 1;
+        }
+
+        .drawer-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        /* Inset Inputs */
+        .cmd-input {
+            flex: 2;
+            border: none;
+            padding: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            background: #1e2033;
+            color: var(--text-color);
+            border-radius: 8px;
+            box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.5), inset -1px -1px 2px rgba(255, 255, 255, 0.05);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            outline: none;
+        }
+
+        .cmd-input:focus {
+            color: var(--accent-color);
+        }
+
+        .neu-action-btn {
+            flex: 1;
+            background: var(--bg-color);
+            color: var(--text-color);
+            border: none;
+            padding: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            box-shadow: 5px 5px 10px var(--shadow-dark), -2px -2px 5px var(--shadow-light);
+            transition: 0.1s;
+        }
+
+        .neu-action-btn:active {
+            box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);
+            transform: translateY(1px);
+        }
+
+        .neu-action-btn.warning {
+            color: var(--danger-color);
+        }
+
+        .neu-action-btn.warning:hover {
+            text-shadow: 0 0 5px rgba(255, 85, 85, 0.4);
+        }
+
+        /* Terminal Window */
+        .status-log {
+            background: #151624;
+            color: #4af626;
+            font-family: 'Courier New', monospace;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            box-shadow: inset 2px 2px 5px #000;
+            border-left: 3px solid var(--accent-color);
+            opacity: 0.9;
+            line-height: 1.4;
+            height: 100px;
+            overflow-y: auto;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="top-controls">
-        <button id="themeBtn" class="icon-btn" title="Toggle Theme">◑</button>
-        <button id="devBtn" class="icon-btn" title="Dev Mode (Bypass Connect)">🛠</button>
-    </div>
+    <input type="checkbox" id="adv-toggle">
 
-    <div id="overlay" class="overlay">
-        <button id="connectBtn" class="connect-btn">CONNECT SPEAKER</button>
-    </div>
+    <!-- Top Layer -->
+    <div class="wrapper">
+        <div class="panel-left">
+            <div class="track-row">
+                <button class="track-btn" id="btn-prev"><i class="fa-solid fa-backward-step"></i></button>
+                <button class="track-btn play" id="btn-play"><i class="fa-solid fa-play"></i></button>
+                <button class="track-btn" id="btn-next"><i class="fa-solid fa-forward-step"></i></button>
+            </div>
 
-    <div class="control-unit" id="controlUnit">
-        <div class="status-led" id="led"></div>
+            <div class="radio-deck">
+                <label class="key-label" id="btn-bt">
+                    <div class="back-side"></div>
+                    <input type="radio" name="source" checked />
+                    <span class="icon"><i class="fa-brands fa-bluetooth-b"></i></span><span class="light-bar"></span>
+                </label>
+                <label class="key-label" id="btn-usb">
+                    <div class="back-side"></div>
+                    <input type="radio" name="source" />
+                    <span class="icon"><i class="fa-brands fa-usb"></i></span><span class="light-bar"></span>
+                </label>
+                <label class="key-label" id="btn-aux">
+                    <div class="back-side"></div>
+                    <input type="radio" name="source" />
+                    <span class="icon"><i class="fa-solid fa-headphones"></i></span><span class="light-bar"></span>
+                </label>
+                <label class="key-label" id="btn-link">
+                    <div class="back-side"></div>
+                    <input type="radio" name="source" />
+                    <span class="icon"><i class="fa-solid fa-link"></i></span><span class="light-bar"></span>
+                </label>
+            </div>
 
-        <!-- Outer Ring (Rotates) -->
-        <div class="volume-ring" id="volumeRing"></div>
+            <div class="control-bar">
+                <button class="bar-btn" id="btn-connect">CONNECT</button>
+                <label for="adv-toggle" class="bar-btn">ADVANCED</label>
+            </div>
+        </div>
 
-        <!-- Inner Zone (Static) -->
-        <div class="inner-zone">
-
-            <!-- Center -->
-            <button id="btn-play" class="center-btn" title="Play/Pause">⏯</button>
-
-            <!-- Surrounding Buttons -->
-            <button id="btn-bt" class="radial-btn pos-top" title="Bluetooth">BT</button>
-            <button id="btn-aux" class="radial-btn pos-top-left" title="AUX">AUX</button>
-            <button id="btn-usb" class="radial-btn pos-top-right" title="USB">USB</button>
-
-            <button id="btn-prev" class="radial-btn pos-left" title="Previous">⏮</button>
-            <button id="btn-next" class="radial-btn pos-right" title="Next">⏭</button>
-
-            <button id="btn-pair" class="radial-btn pos-bottom" title="Pairing">∞</button>
-            <button id="btn-bass-down" class="radial-btn pos-bottom-left" title="Bass -">-</button>
-            <button id="btn-bass-up" class="radial-btn pos-bottom-right" title="Bass +">+</button>
-
+        <div class="panel-right">
+            <div class="dial-container">
+                <button class="dial-btn" id="btn-bass-up"><i class="fa-solid fa-chevron-up"></i></button>
+                <button class="dial-btn" id="btn-vol-up"><i class="fa-solid fa-plus"></i></button>
+                <button class="dial-btn" id="btn-bass-down"><i class="fa-solid fa-chevron-down"></i></button>
+                <button class="dial-btn" id="btn-vol-down"><i class="fa-solid fa-minus"></i></button>
+            </div>
         </div>
     </div>
 
+    <!-- Bottom Layer (Slides out from behind) -->
+    <div class="drawer-wrapper">
+        <div class="advanced-drawer">
+            <div class="drawer-row">
+                <input type="text" class="cmd-input" id="custom-cmd" placeholder="01 03 ..." />
+                <button class="neu-action-btn" id="btn-send">SEND CMD</button>
+            </div>
+            <div class="drawer-row">
+                <button class="neu-action-btn warning" id="btn-reset" style="width:100%">FACTORY RESET DEVICE</button>
+            </div>
+            <div class="status-log" id="log-window">
+                > System Ready.<br>
+                > Click CONNECT to search for Z407...
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIC BLOCK (Ready for WebPuck Implementation) -->
     <script>
-        // --- Theme Logic ---
-        const themeBtn = document.getElementById('themeBtn');
-        themeBtn.addEventListener('click', () => {
-            const body = document.body;
-            const isDark = body.getAttribute('data-theme') === 'dark';
-            body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-        });
+        const SERVICE_UUID = 0x1812;
+        let device, server, service, char;
+        const logWindow = document.getElementById('log-window');
 
-        // --- Dev Mode Logic ---
-        const devBtn = document.getElementById('devBtn');
-        let devMode = false;
-        devBtn.addEventListener('click', () => {
-            devMode = !devMode;
-            devBtn.classList.toggle('active', devMode);
-
-            if (devMode) {
-                // Fake connection
-                document.getElementById('overlay').classList.add('hidden');
-                document.getElementById('led').classList.add('connected');
-                console.log("Dev Mode: Enabled");
-            } else {
-                // Disconnect if not actually connected
-                if (!commandCharacteristic) {
-                    document.getElementById('overlay').classList.remove('hidden');
-                    document.getElementById('led').classList.remove('connected');
-                }
-                console.log("Dev Mode: Disabled");
-            }
-        });
-
-        // --- 3D Tilt ---
-        const unit = document.getElementById('controlUnit');
-        document.addEventListener('mousemove', (e) => {
-            const x = (e.clientX / window.innerWidth - 0.5) * 2;
-            const y = (e.clientY / window.innerHeight - 0.5) * 2;
-            unit.style.transform = `rotateX(${-y * 3}deg) rotateY(${x * 3}deg)`;
-        });
-
-        // --- Volume Ring Logic ---
-        const ring = document.getElementById('volumeRing');
-        let isDragging = false;
-        let startAngle = 0;
-        let currentRotation = 0;
-        let lastSentRotation = 0;
-
-        function getAngle(x, y, cx, cy) {
-            return Math.atan2(y - cy, x - cx) * 180 / Math.PI;
+        function log(msg) {
+            const line = document.createElement('div');
+            line.innerText = `> ${msg}`;
+            logWindow.appendChild(line);
+            logWindow.scrollTop = logWindow.scrollHeight;
         }
 
-        const startDrag = (e) => {
-            isDragging = true;
-            const rect = ring.getBoundingClientRect();
-            const cx = rect.left + rect.width / 2;
-            const cy = rect.top + rect.height / 2;
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            startAngle = getAngle(clientX, clientY, cx, cy) - currentRotation;
-            e.preventDefault();
-        };
-
-        const drag = (e) => {
-            if (!isDragging) return;
-            const rect = ring.getBoundingClientRect();
-            const cx = rect.left + rect.width / 2;
-            const cy = rect.top + rect.height / 2;
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-            currentRotation = getAngle(clientX, clientY, cx, cy) - startAngle;
-            ring.style.transform = `rotate(${currentRotation}deg)`;
-
-            const delta = currentRotation - lastSentRotation;
-            if (delta > 15) { send(COMMANDS.VOLUME_UP); lastSentRotation = currentRotation; }
-            else if (delta < -15) { send(COMMANDS.VOLUME_DOWN); lastSentRotation = currentRotation; }
-        };
-
-        const endDrag = () => { isDragging = false; };
-
-        ring.addEventListener('mousedown', startDrag);
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', endDrag);
-        ring.addEventListener('touchstart', startDrag);
-        document.addEventListener('touchmove', drag);
-        document.addEventListener('touchend', endDrag);
-
-
-        // --- Bluetooth Logic ---
-        const SERVICE_UUID = '0000fdc2-0000-1000-8000-00805f9b34fb';
-        const COMMAND_UUID = 'c2e758b9-0e78-41e0-b0cb-98a593193fc5';
-        const RESPONSE_UUID = 'b84ac9c6-29c5-46d4-bba1-9d534784330f';
-
-        const COMMANDS = {
-            INITIATE: new Uint8Array([0x84, 0x05]),
-            ACKNOWLEDGE: new Uint8Array([0x84, 0x00]),
-            VOLUME_UP: new Uint8Array([0x80, 0x02]),
-            VOLUME_DOWN: new Uint8Array([0x80, 0x03]),
-            BASS_UP: new Uint8Array([0x80, 0x00]),
-            BASS_DOWN: new Uint8Array([0x80, 0x01]),
-            PLAY_PAUSE: new Uint8Array([0x80, 0x04]),
-            NEXT_TRACK: new Uint8Array([0x80, 0x05]),
-            PREV_TRACK: new Uint8Array([0x80, 0x06]),
-            SWITCH_BLUETOOTH: new Uint8Array([0x81, 0x01]),
-            SWITCH_AUX: new Uint8Array([0x81, 0x02]),
-            SWITCH_USB: new Uint8Array([0x81, 0x03]),
-            PAIRING: new Uint8Array([0x82, 0x00]),
-        };
-
-        let commandCharacteristic = null;
-        const overlay = document.getElementById('overlay');
-        const led = document.getElementById('led');
-
-        async function connect() {
-            if (!navigator.bluetooth) return alert('Web Bluetooth not supported.');
+        document.getElementById('btn-connect').addEventListener('click', async () => {
             try {
-                const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID] }] });
-                device.addEventListener('gattserverdisconnected', () => {
-                    if (!devMode) {
-                        overlay.classList.remove('hidden');
-                        led.classList.remove('connected');
-                    }
-                    commandCharacteristic = null;
+                log('Scanning for "Logi Z407"...');
+                device = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: 'Logi Z407' }],
+                    optionalServices: ['battery_service', SERVICE_UUID]
                 });
-
-                const server = await device.gatt.connect();
-                const service = await server.getPrimaryService(SERVICE_UUID);
-                const responseChar = await service.getCharacteristic(RESPONSE_UUID);
-                commandCharacteristic = await service.getCharacteristic(COMMAND_UUID);
-
-                await responseChar.startNotifications();
-                responseChar.addEventListener('characteristicvaluechanged', (e) => {
-                    const hex = Array.from(new Uint8Array(e.target.value.buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-                    if (hex === 'd40501') commandCharacteristic.writeValueWithoutResponse(COMMANDS.ACKNOWLEDGE);
-                    else if (hex === 'd40001' || hex === 'd40003') {
-                        overlay.classList.add('hidden');
-                        led.classList.add('connected');
-                    }
-                });
-
-                await commandCharacteristic.writeValueWithoutResponse(COMMANDS.INITIATE);
-            } catch (e) { console.error(e); }
-        }
-
-        async function send(cmd) {
-            if (commandCharacteristic) {
-                await commandCharacteristic.writeValueWithoutResponse(cmd);
-            } else if (devMode) {
-                console.log("Dev Mode: Command Sent", cmd);
-                // Visual feedback in dev mode
-                led.style.boxShadow = '0 0 20px var(--accent)';
-                setTimeout(() => led.style.boxShadow = '0 0 10px var(--accent)', 100);
-            } else {
-                led.style.backgroundColor = '#e53e3e';
-                setTimeout(() => led.style.backgroundColor = 'var(--led-off)', 200);
+                log('Connecting to GATT Server...');
+                server = await device.gatt.connect();
+                service = await server.getPrimaryService(SERVICE_UUID);
+                log('Connected successfully.');
+            } catch (error) {
+                log('Error: ' + error);
             }
-        }
-
-        // --- Bindings ---
-        document.getElementById('connectBtn').addEventListener('click', connect);
-        const bind = (id, cmd) => document.getElementById(id).addEventListener('click', (e) => {
-            e.stopPropagation();
-            send(cmd);
         });
 
-        bind('btn-play', COMMANDS.PLAY_PAUSE);
-        bind('btn-next', COMMANDS.NEXT_TRACK);
-        bind('btn-prev', COMMANDS.PREV_TRACK);
-        bind('btn-bt', COMMANDS.SWITCH_BLUETOOTH);
-        bind('btn-aux', COMMANDS.SWITCH_AUX);
-        bind('btn-usb', COMMANDS.SWITCH_USB);
-        bind('btn-bass-up', COMMANDS.BASS_UP);
-        bind('btn-bass-down', COMMANDS.BASS_DOWN);
-        bind('btn-pair', COMMANDS.PAIRING);
+        // Add logic hooks here based on z407-webpuck repo
+        const controls = {
+            'btn-play': [0x01], 'btn-next': [0x02], 'btn-prev': [0x03],
+            'btn-vol-up': [0x04], 'btn-vol-down': [0x05], 'btn-bass-up': [0x06], 'btn-bass-down': [0x07]
+        };
 
+        Object.keys(controls).forEach(id => {
+            document.getElementById(id).addEventListener('click', () => {
+                log(`CMD Sent: ${id}`);
+            });
+        });
+
+        document.getElementById('btn-send').addEventListener('click', () => {
+            log(`Custom Hex: ${document.getElementById('custom-cmd').value}`);
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            if (confirm("Factory Reset?")) log("RESET COMMAND SENT.");
+        });
     </script>
 </body>
 
