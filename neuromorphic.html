@@ -15,23 +15,16 @@
             --bg-color: #2b2e4a;
             --panel-color: #2b2e4a;
             --key-color: #35395b;
-
-            /* Lighting Engine */
             --shadow-light: rgba(255, 255, 255, 0.06);
             --shadow-dark: rgba(0, 0, 0, 0.5);
-
-            /* Accents */
             --text-color: #8d93ab;
             --accent-color: #7d83ff;
             --danger-color: #ff5555;
-
-            /* Dimensions */
             --rect-width: 360px;
             --rect-height: 180px;
             --circle-size: 220px;
         }
 
-        /* Base Reset */
         * {
             margin: 0;
             padding: 0;
@@ -50,32 +43,13 @@
             min-height: 100vh;
         }
 
-        /* Custom Scrollbar for the Log */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #151624;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #35395b;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--accent-color);
-        }
-
         /* Logic Toggle */
         #adv-toggle {
             display: none;
         }
 
         /* =========================================
-           2. MAIN UNIT (Top Layer - Z-Index 100)
+           2. MAIN UNIT
            ========================================= */
         .wrapper {
             position: relative;
@@ -83,19 +57,14 @@
             align-items: center;
             margin-left: -40px;
             z-index: 100;
-            /* Stays ON TOP of the drawer */
         }
 
-        /* --- LEFT PANEL --- */
         .panel-left {
             width: var(--rect-width);
             height: var(--rect-height);
             background: var(--panel-color);
             border-radius: 12px 0 0 12px;
-
-            /* Shadow casts DOWN onto the drawer, but not Right */
             box-shadow: -10px -10px 20px var(--shadow-light), -5px 15px 25px var(--shadow-dark);
-
             padding: 12px 80px 12px 12px;
             margin-right: -55px;
             z-index: 5;
@@ -111,6 +80,7 @@
             gap: 8px;
             height: 45px;
             margin-bottom: 6px;
+            transition: opacity 0.3s;
         }
 
         .track-btn {
@@ -147,6 +117,7 @@
             padding: 4px;
             border-radius: 8px;
             flex: 1;
+            transition: opacity 0.3s;
         }
 
         /* Keys */
@@ -180,7 +151,6 @@
             opacity: 0.5;
         }
 
-        /* Active Key */
         .key-label:has(input:checked) {
             transform: perspective(200px) rotateX(-15deg);
             margin-top: 6px;
@@ -216,7 +186,30 @@
             box-shadow: 0 0 6px var(--accent-color);
         }
 
-        /* Control Bar (Hanging) */
+        /* Active pairing state (independent of radio buttons) */
+        .key-label.active-pairing {
+            transform: perspective(200px) rotateX(-15deg);
+            margin-top: 6px;
+            border-top: 1px solid var(--accent-color);
+            background: #272a45;
+            box-shadow: inset 0px -10px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .key-label.active-pairing .back-side {
+            opacity: 1;
+        }
+
+        .key-label.active-pairing .icon {
+            color: var(--accent-color);
+            text-shadow: 0 0 10px var(--accent-color);
+        }
+
+        .key-label.active-pairing .light-bar {
+            background: var(--accent-color);
+            box-shadow: 0 0 6px var(--accent-color);
+        }
+
+        /* Control Bar */
         .control-bar {
             position: absolute;
             bottom: -35px;
@@ -224,16 +217,12 @@
             width: 180px;
             height: 40px;
             background: #35395b;
-            /* Distinct material */
             border-radius: 0 0 12px 12px;
             display: flex;
             padding: 4px;
             gap: 6px;
-
-            /* Shadow casts DOWN onto the Drawer */
             box-shadow: 0 15px 20px var(--shadow-dark);
             z-index: 20;
-            /* Higher than Drawer */
         }
 
         .bar-btn {
@@ -263,7 +252,6 @@
             transform: translateY(1px);
         }
 
-        /* Advanced Active State */
         #adv-toggle:checked~.wrapper .control-bar label[for="adv-toggle"] {
             color: var(--accent-color);
             box-shadow: inset 2px 2px 5px var(--shadow-dark);
@@ -276,19 +264,15 @@
             background: var(--bg-color);
             border-radius: 50%;
             z-index: 10;
-
-            /* Shadow Configuration */
             box-shadow: 10px 10px 25px var(--shadow-dark), -5px -5px 20px var(--shadow-light);
-
-            /* Physical Edge Definition */
             border: 4px solid var(--bg-color);
             border-left: 1px solid rgba(0, 0, 0, 0.3);
             border-top: 1px solid rgba(255, 255, 255, 0.05);
-
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 10px;
+            transition: opacity 0.3s;
         }
 
         .dial-container {
@@ -356,28 +340,18 @@
 
 
         /* =========================================
-           3. ADVANCED DRAWER (Bottom Layer - Z-Index 50)
+           3. ADVANCED DRAWER (Pop-under)
            ========================================= */
         .drawer-wrapper {
             width: 500px;
             margin-left: -50px;
             overflow: hidden;
-
-            /* Start hidden */
             max-height: 0;
             opacity: 0;
-
-            /* 
-               PADDING TOP: Creates space so the drawer starts "below" the control bar visually
-               MARGIN TOP: Pulls the whole container up so it slides from underneath
-            */
             padding-top: 40px;
             margin-top: -20px;
-
             transition: max-height 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease;
-
-            z-index: 50;
-            /* BELOW the main wrapper */
+            z-index: 0;
             position: relative;
         }
 
@@ -388,10 +362,8 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-
-            /* Dark shadow to separate from background */
-            box-shadow: 0px 15px 30px var(--shadow-dark);
-            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0px 10px 25px var(--shadow-dark), 0px -2px 10px var(--shadow-light);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         #adv-toggle:checked~.drawer-wrapper {
@@ -404,7 +376,6 @@
             gap: 15px;
         }
 
-        /* Inset Inputs */
         .cmd-input {
             flex: 2;
             border: none;
@@ -452,7 +423,6 @@
             text-shadow: 0 0 5px rgba(255, 85, 85, 0.4);
         }
 
-        /* Terminal Window */
         .status-log {
             background: #151624;
             color: #4af626;
@@ -467,6 +437,25 @@
             height: 100px;
             overflow-y: auto;
         }
+
+        /* Scrollbar styles */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #151624;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #35395b;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
+        }
     </style>
 </head>
 
@@ -477,31 +466,33 @@
     <!-- Top Layer -->
     <div class="wrapper">
         <div class="panel-left">
-            <div class="track-row">
-                <button class="track-btn" id="btn-prev"><i class="fa-solid fa-backward-step"></i></button>
-                <button class="track-btn play" id="btn-play"><i class="fa-solid fa-play"></i></button>
-                <button class="track-btn" id="btn-next"><i class="fa-solid fa-forward-step"></i></button>
+            <div class="track-row" style="opacity: 0.5; pointer-events: none;">
+                <button class="track-btn" id="btn-prev" data-cmd="PREV_TRACK"><i
+                        class="fa-solid fa-backward-step"></i></button>
+                <button class="track-btn play" id="btn-play" data-cmd="PLAY_PAUSE"><i
+                        class="fa-solid fa-play"></i></button>
+                <button class="track-btn" id="btn-next" data-cmd="NEXT_TRACK"><i
+                        class="fa-solid fa-forward-step"></i></button>
             </div>
 
-            <div class="radio-deck">
-                <label class="key-label" id="btn-bt">
+            <div class="radio-deck" style="opacity: 0.5; pointer-events: none;">
+                <label class="key-label" id="btn-bt" data-cmd="SWITCH_BLUETOOTH">
                     <div class="back-side"></div>
                     <input type="radio" name="source" checked />
                     <span class="icon"><i class="fa-brands fa-bluetooth-b"></i></span><span class="light-bar"></span>
                 </label>
-                <label class="key-label" id="btn-usb">
+                <label class="key-label" id="btn-usb" data-cmd="SWITCH_USB">
                     <div class="back-side"></div>
                     <input type="radio" name="source" />
                     <span class="icon"><i class="fa-brands fa-usb"></i></span><span class="light-bar"></span>
                 </label>
-                <label class="key-label" id="btn-aux">
+                <label class="key-label" id="btn-aux" data-cmd="SWITCH_AUX">
                     <div class="back-side"></div>
                     <input type="radio" name="source" />
                     <span class="icon"><i class="fa-solid fa-headphones"></i></span><span class="light-bar"></span>
                 </label>
                 <label class="key-label" id="btn-link">
                     <div class="back-side"></div>
-                    <input type="radio" name="source" />
                     <span class="icon"><i class="fa-solid fa-link"></i></span><span class="light-bar"></span>
                 </label>
             </div>
@@ -512,21 +503,30 @@
             </div>
         </div>
 
-        <div class="panel-right">
+        <div class="panel-right" style="opacity: 0.5; pointer-events: none;">
             <div class="dial-container">
-                <button class="dial-btn" id="btn-bass-up"><i class="fa-solid fa-chevron-up"></i></button>
-                <button class="dial-btn" id="btn-vol-up"><i class="fa-solid fa-plus"></i></button>
-                <button class="dial-btn" id="btn-bass-down"><i class="fa-solid fa-chevron-down"></i></button>
-                <button class="dial-btn" id="btn-vol-down"><i class="fa-solid fa-minus"></i></button>
+                <button class="dial-btn" id="btn-bass-up" data-cmd="BASS_UP"><i
+                        class="fa-solid fa-chevron-up"></i></button>
+                <button class="dial-btn" id="btn-vol-up" data-cmd="VOLUME_UP"><i class="fa-solid fa-plus"></i></button>
+                <button class="dial-btn" id="btn-bass-down" data-cmd="BASS_DOWN"><i
+                        class="fa-solid fa-chevron-down"></i></button>
+                <button class="dial-btn" id="btn-vol-down" data-cmd="VOLUME_DOWN"><i
+                        class="fa-solid fa-minus"></i></button>
             </div>
         </div>
     </div>
 
-    <!-- Bottom Layer (Slides out from behind) -->
+    <!-- Bottom Layer: Drawer -->
     <div class="drawer-wrapper">
         <div class="advanced-drawer">
             <div class="drawer-row">
-                <input type="text" class="cmd-input" id="custom-cmd" placeholder="01 03 ..." />
+                <label
+                    style="color:var(--text-color); display:flex; align-items:center; gap:10px; cursor:pointer; font-size: 0.9rem;">
+                    <input type="checkbox" id="show-all-devices"> Show all Bluetooth devices
+                </label>
+            </div>
+            <div class="drawer-row">
+                <input type="text" class="cmd-input" id="custom-cmd" placeholder="e.g. 80 04 or 128, 4" />
                 <button class="neu-action-btn" id="btn-send">SEND CMD</button>
             </div>
             <div class="drawer-row">
@@ -534,58 +534,246 @@
             </div>
             <div class="status-log" id="log-window">
                 > System Ready.<br>
-                > Click CONNECT to search for Z407...
             </div>
         </div>
     </div>
 
-    <!-- LOGIC BLOCK (Ready for WebPuck Implementation) -->
     <script>
-        const SERVICE_UUID = 0x1812;
-        let device, server, service, char;
-        const logWindow = document.getElementById('log-window');
+        // UUIDs from the protocol documentation
+        const SERVICE_UUID = '0000fdc2-0000-1000-8000-00805f9b34fb';
+        const COMMAND_UUID = 'c2e758b9-0e78-41e0-b0cb-98a593193fc5';
+        const RESPONSE_UUID = 'b84ac9c6-29c5-46d4-bba1-9d534784330f';
 
-        function log(msg) {
+        const COMMANDS = {
+            INITIATE: new Uint8Array([0x84, 0x05]),
+            ACKNOWLEDGE: new Uint8Array([0x84, 0x00]),
+            VOLUME_UP: new Uint8Array([0x80, 0x02]),
+            VOLUME_DOWN: new Uint8Array([0x80, 0x03]),
+            BASS_UP: new Uint8Array([0x80, 0x00]),
+            BASS_DOWN: new Uint8Array([0x80, 0x01]),
+            PLAY_PAUSE: new Uint8Array([0x80, 0x04]),
+            NEXT_TRACK: new Uint8Array([0x80, 0x05]),
+            PREV_TRACK: new Uint8Array([0x80, 0x06]),
+            SWITCH_BLUETOOTH: new Uint8Array([0x81, 0x01]),
+            SWITCH_AUX: new Uint8Array([0x81, 0x02]),
+            SWITCH_USB: new Uint8Array([0x81, 0x03]),
+            SOUND_1: new Uint8Array([0x85, 0x02]),
+            SOUND_2: new Uint8Array([0x85, 0x01]),
+            SOUND_3: new Uint8Array([0x85, 0x03]),
+            PAIRING: new Uint8Array([0x82, 0x00]),
+            FACTORY_RESET: new Uint8Array([0x83, 0x00]),
+        };
+
+        // --- STATE & QUEUE ---
+        let bluetoothDevice = null;
+        let commandCharacteristic = null;
+        let handshakeTimeoutTimer = null;
+        let commandQueue = Promise.resolve();
+
+        // --- UI ELEMENTS ---
+        const connectButton = document.getElementById('btn-connect');
+        const logWindow = document.getElementById('log-window');
+        const showAllDevicesCheckbox = document.getElementById('show-all-devices');
+        const pairingBtn = document.getElementById('btn-link');
+
+        // Control Groups to Disable/Enable
+        const trackRow = document.querySelector('.track-row');
+        const radioDeck = document.querySelector('.radio-deck');
+        const panelRight = document.querySelector('.panel-right');
+
+        // --- HELPERS ---
+        function log(message) {
+            console.log(message);
             const line = document.createElement('div');
-            line.innerText = `> ${msg}`;
+            const time = new Date().toLocaleTimeString([], { hour12: false });
+            line.innerText = `[${time}] ${message}`;
             logWindow.appendChild(line);
             logWindow.scrollTop = logWindow.scrollHeight;
         }
 
-        document.getElementById('btn-connect').addEventListener('click', async () => {
+        function toHex(dataViewOrBuffer) {
+            return Array.from(new Uint8Array(dataViewOrBuffer.buffer || dataViewOrBuffer))
+                .map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function updateConnectionState(isConnected) {
+            const opacity = isConnected ? '1' : '0.5';
+            const pointerEvents = isConnected ? 'auto' : 'none';
+
+            trackRow.style.opacity = opacity;
+            trackRow.style.pointerEvents = pointerEvents;
+            radioDeck.style.opacity = opacity;
+            radioDeck.style.pointerEvents = pointerEvents;
+            panelRight.style.opacity = opacity;
+            panelRight.style.pointerEvents = pointerEvents;
+
+            if (isConnected) {
+                connectButton.textContent = 'DISCONNECT';
+                connectButton.style.color = '#ff5555';
+            } else {
+                connectButton.textContent = 'CONNECT';
+                connectButton.style.color = '';
+                bluetoothDevice = null;
+                commandCharacteristic = null;
+            }
+        }
+
+        // --- BLUETOOTH CONNECT LOGIC ---
+        connectButton.addEventListener('click', async () => {
+            if (bluetoothDevice && bluetoothDevice.gatt.connected) {
+                log('Disconnecting...');
+                bluetoothDevice.gatt.disconnect();
+                return;
+            }
+
+            if (!navigator.bluetooth) {
+                log('Error: Web Bluetooth API not found (Use Chrome/Edge Desktop).');
+                return;
+            }
+
             try {
-                log('Scanning for "Logi Z407"...');
-                device = await navigator.bluetooth.requestDevice({
-                    filters: [{ name: 'Logi Z407' }],
-                    optionalServices: ['battery_service', SERVICE_UUID]
+                log('Requesting Bluetooth device...');
+                const options = {
+                    optionalServices: [SERVICE_UUID]
+                };
+
+                if (showAllDevicesCheckbox.checked) {
+                    options.acceptAllDevices = true;
+                } else {
+                    options.filters = [{ services: [SERVICE_UUID] }];
+                }
+
+                const device = await navigator.bluetooth.requestDevice(options);
+                bluetoothDevice = device;
+
+                log(`Device selected: "${device.name}"`);
+                device.addEventListener('gattserverdisconnected', () => {
+                    log('Device disconnected.');
+                    updateConnectionState(false);
                 });
-                log('Connecting to GATT Server...');
-                server = await device.gatt.connect();
-                service = await server.getPrimaryService(SERVICE_UUID);
-                log('Connected successfully.');
+
+                const server = await device.gatt.connect();
+                log('GATT Connected. Getting service...');
+
+                const service = await server.getPrimaryService(SERVICE_UUID);
+                const responseCharacteristic = await service.getCharacteristic(RESPONSE_UUID);
+                commandCharacteristic = await service.getCharacteristic(COMMAND_UUID);
+
+                await responseCharacteristic.startNotifications();
+                log('Listening. Starting handshake...');
+
+                // Handshake State Machine
+                let handshakeState = 1;
+
+                // Safety Timeout
+                handshakeTimeoutTimer = setTimeout(() => {
+                    if (handshakeState !== 3) {
+                        log('Handshake timed out.');
+                        if (bluetoothDevice && bluetoothDevice.gatt.connected) {
+                            bluetoothDevice.gatt.disconnect();
+                        }
+                    }
+                }, 5000);
+
+                responseCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
+                    const hexString = toHex(event.target.value);
+
+                    if (hexString === 'd40501') {
+                        if (handshakeState === 1) {
+                            log(`Challenge Recv. Sending ACK...`);
+                            sendCommandRaw(COMMANDS.ACKNOWLEDGE);
+                            handshakeState = 2;
+                        }
+                    }
+                    else if (hexString === 'd40001' || hexString === 'd40003') {
+                        if (handshakeState === 2) {
+                            log(`Handshake Verified. Secured.`);
+                            clearTimeout(handshakeTimeoutTimer);
+                            updateConnectionState(true);
+                            handshakeState = 3;
+                        }
+                    }
+                });
+
+                sendCommandRaw(COMMANDS.INITIATE);
+
             } catch (error) {
-                log('Error: ' + error);
+                log(`Error: ${error.message}`);
+                updateConnectionState(false);
             }
         });
 
-        // Add logic hooks here based on z407-webpuck repo
-        const controls = {
-            'btn-play': [0x01], 'btn-next': [0x02], 'btn-prev': [0x03],
-            'btn-vol-up': [0x04], 'btn-vol-down': [0x05], 'btn-bass-up': [0x06], 'btn-bass-down': [0x07]
-        };
+        // --- COMMAND QUEUE ---
+        function sendCommand(command) {
+            if (!commandCharacteristic) {
+                log('Not connected.');
+                return;
+            }
+            commandQueue = commandQueue.then(async () => {
+                try {
+                    await commandCharacteristic.writeValueWithoutResponse(command);
+                } catch (error) {
+                    log(`Write Error: ${error.message}`);
+                    if (!bluetoothDevice.gatt.connected) updateConnectionState(false);
+                }
+            });
+        }
 
-        Object.keys(controls).forEach(id => {
-            document.getElementById(id).addEventListener('click', () => {
-                log(`CMD Sent: ${id}`);
+        // Helper for internal commands to avoid log clutter if desired, currently maps to same
+        function sendCommandRaw(c) { sendCommand(c); }
+
+        // --- UI BINDINGS ---
+        document.querySelectorAll('[data-cmd]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const cmd = COMMANDS[btn.dataset.cmd];
+                if (cmd) {
+                    // Visual feedback for radio buttons (Source Switching)
+                    const input = btn.querySelector('input[type="radio"]');
+                    if (input) input.checked = true;
+
+                    sendCommand(cmd);
+                }
             });
         });
 
-        document.getElementById('btn-send').addEventListener('click', () => {
-            log(`Custom Hex: ${document.getElementById('custom-cmd').value}`);
+        // Pairing Button with Visual Logic
+        let pairingTimeout = null;
+        pairingBtn.addEventListener('click', () => {
+            if (pairingBtn.classList.contains('active-pairing')) return;
+
+            pairingBtn.classList.add('active-pairing');
+            sendCommand(COMMANDS.PAIRING);
+            log("Entering Pairing Mode (10s)...");
+
+            pairingTimeout = setTimeout(() => {
+                pairingBtn.classList.remove('active-pairing');
+                pairingTimeout = null;
+            }, 10000);
         });
 
+        // Advanced Controls
         document.getElementById('btn-reset').addEventListener('click', () => {
-            if (confirm("Factory Reset?")) log("RESET COMMAND SENT.");
+            if (confirm("Factory Reset: This will unpair all devices. Continue?")) {
+                sendCommand(COMMANDS.FACTORY_RESET);
+            }
+        });
+
+        document.getElementById('btn-send').addEventListener('click', () => {
+            const input = document.getElementById('custom-cmd').value;
+            try {
+                // Robust hex/dec parser
+                const cleanInput = input.replace(/0x/g, '').replace(/,/g, ' ');
+                const byteValues = cleanInput.split(/\s+/).filter(p => p).map(p => parseInt(p, 16));
+
+                if (byteValues.length === 0 || byteValues.some(isNaN)) {
+                    throw new Error("Invalid hex or number format.");
+                }
+
+                log(`Sending custom: [${byteValues.map(b => '0x' + b.toString(16)).join(' ')}]`);
+                sendCommand(new Uint8Array(byteValues));
+            } catch (e) {
+                alert(`Error: ${e.message}`);
+            }
         });
     </script>
 </body>

@@ -4,150 +4,383 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Web-based remote control for Logitech Z407 Speakers using Web Bluetooth.">
     <title>Logitech Z407 Web Puck</title>
     <style>
+        :root {
+            --bg-body: #f0f2f5;
+            --bg-card: #ffffff;
+            --text-main: #202124;
+            --text-muted: #5f6368;
+            --border: #dadce0;
+            --primary: #007bff;
+            --primary-hover: #0069d9;
+            --danger: #dc3545;
+            --success: #28a745;
+            --log-bg: #1e1e1e;
+            --log-text: #00ff00;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+        }
+
+        body.dark-mode {
+            --bg-body: #121212;
+            --bg-card: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --border: #333;
+            --primary: #4dabf7;
+            --primary-hover: #339af0;
+            --danger: #ff6b6b;
+            --success: #51cf66;
+            --log-bg: #000;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
         body {
-            font-family: sans-serif;
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 1.5em 1em;
+            line-height: 1.4;
+            font-size: 14px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .container {
             max-width: 600px;
-            margin: 2em auto;
-            padding: 0 1em;
+            margin: 0 auto;
         }
 
-        button {
-            font-size: 1rem;
-            padding: 0.5em 1em;
-            margin: 0.25em;
+        /* Header */
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1em;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 1em;
+            font-size: 0.85rem;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.4em;
             cursor: pointer;
-            width: 180px;
-            text-align: center;
+            user-select: none;
         }
 
-        #log {
-            font-family: monospace;
-            white-space: pre-wrap;
-            background-color: #f4f4f4;
-            border: 1px solid #ccc;
+        /* Cards & Sections */
+        .card {
+            background: var(--bg-card);
+            border-radius: 8px;
             padding: 1em;
-            height: 200px;
-            overflow-y: scroll;
+            margin-bottom: 1em;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
         }
 
+        .section-title {
+            margin: 0 0 0.75em 0;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.25em;
+        }
+
+        /* Grid for Buttons */
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 0.5em;
+        }
+
+        /* Buttons */
+        button {
+            border: 1px solid var(--border);
+            background: var(--bg-body);
+            color: var(--text-main);
+            padding: 0.6em;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.1s;
+            font-weight: 500;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        button:hover:not(:disabled) {
+            filter: brightness(0.95);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button.primary {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+        }
+
+        button.primary:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+
+        button.danger {
+            background: var(--danger);
+            color: #fff;
+            border: none;
+        }
+
+        button.success {
+            background: var(--success);
+            color: #fff;
+            border: none;
+        }
+
+        /* Active State for Pairing Button */
+        button.active-state {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Connection Bar */
+        .connection-bar {
+            display: flex;
+            align-items: center;
+            gap: 1em;
+            flex-wrap: wrap;
+        }
+
+        .status-text {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .status-disconnected {
+            color: var(--danger);
+        }
+
+        .status-connected {
+            color: var(--success);
+        }
+
+        /* Alert Box */
+        .alert-box {
+            background-color: rgba(255, 193, 7, 0.15);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            color: var(--text-main);
+            padding: 0.75em 1em;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin-bottom: 1em;
+        }
+
+        .alert-error {
+            background-color: rgba(220, 53, 69, 0.15);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+
+        .alert-box strong {
+            color: #d39e00;
+        }
+
+        body.dark-mode .alert-box strong {
+            color: #ffca2c;
+        }
+
+        .alert-error strong {
+            color: var(--danger);
+        }
+
+        .alert-box ul {
+            margin: 0.25em 0 0 1.25em;
+            padding: 0;
+        }
+
+        .alert-box li {
+            margin-bottom: 0.25em;
+        }
+
+        /* Log */
+        #log {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 11px;
+            background-color: var(--log-bg);
+            color: var(--log-text);
+            padding: 0.75em;
+            height: 150px;
+            overflow-y: auto;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin: 0;
+            white-space: pre-wrap;
+            scroll-behavior: smooth;
+        }
+
+        /* Utilities */
         .hidden {
             display: none !important;
         }
 
-        .controls-section {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 0 1em 1em 1em;
-            margin-bottom: 1em;
+        .controls-wrapper {
+            transition: opacity 0.3s;
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(1);
         }
 
-        .controls-section h4 {
-            margin-bottom: 0.5em;
+        .controls-wrapper.active {
+            opacity: 1;
+            pointer-events: auto;
+            filter: grayscale(0);
         }
 
-        #advanced-toggle-div {
-            margin: 1em 0;
-        }
-
-        #custom-command-input {
-            font-size: 1rem;
-            padding: 0.5em;
-            width: 250px;
+        /* Inputs */
+        input[type="text"] {
+            padding: 0.4em;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background: var(--bg-body);
+            color: var(--text-main);
+            width: 150px;
         }
     </style>
 </head>
 
 <body>
+    <div class="container">
 
-    <h1>Logitech Z407 Web Puck</h1>
-
-    <div
-        style="background-color: #fff3cd; color: #856404; padding: 1em; border: 1px solid #ffeeba; border-radius: 8px; margin-bottom: 1em;">
-        <strong>Important Notes:</strong>
-        <ul style="margin: 0.5em 0 0 1.5em;">
-            <li><strong>Browser Support:</strong> You must use a browser that supports Web Bluetooth, such as
-                <strong>Google Chrome</strong>, <strong>Microsoft Edge</strong>, or <strong>Opera</strong>.</li>
-            <li><strong>Mobile Support:</strong> This tool generally does <strong>not</strong> work on mobile phones
-                (iOS/Android) due to browser limitations.</li>
-            <li><strong>Connection Required:</strong> You must click "Connect to Speaker" and select your Z407 device
-                for any controls to work.</li>
-            <li><strong>Source Mode:</strong> Audio and Bass controls only work when the speaker is in the correct
-                source mode (e.g., Bluetooth).</li>
-            <li><strong>Volume Control:</strong> The speakers do not have independent volume control (it adjusts the
-                source volume), but Bass control is independent.</li>
-        </ul>
-    </div>
-
-    <p>
-        <button id="connectBtn" style="width: auto;">1. Connect to Speaker</button>
-    </p>
-
-    <div id="controls" class="hidden">
-        <h2>Controls</h2>
-
-        <div class="controls-section">
-            <h4>Audio & Playback</h4>
-            <button id="volumeUpBtn">Volume Up</button>
-            <button id="volumeDownBtn">Volume Down</button>
-            <button id="bassUpBtn">Bass Up</button>
-            <button id="bassDownBtn">Bass Down</button>
-            <button id="playPauseBtn">Play/Pause</button>
-            <button id="nextTrackBtn">Next Track</button>
-            <button id="prevTrackBtn">Prev Track</button>
+        <div class="header-row">
+            <h1>Z407 Web Puck</h1>
+            <div class="header-controls">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="hideNotesToggle"> Hide Notes
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="darkModeToggle"> Dark Mode
+                </label>
+            </div>
         </div>
 
-        <div class="controls-section">
-            <h4>Source & Pairing</h4>
-            <button id="switchBluetoothBtn">Switch to Bluetooth</button>
-            <button id="switchAuxBtn">Switch to AUX</button>
-            <button id="switchUsbBtn">Switch to USB</button>
-            <button id="pairingBtn">Enter Pairing Mode</button>
+        <div id="browser-warning" class="alert-box alert-error hidden">
+            <strong>Incompatible Browser:</strong> This app requires the Web Bluetooth API (Chrome, Edge, Opera on
+            Desktop/Android). Firefox and Safari are not supported.
         </div>
 
-        <div class="controls-section">
-            <h4>Auditory Cues</h4>
-            <button id="sound1Btn">Sound 1</button>
-            <button id="sound2Btn">Sound 2</button>
-            <button id="sound3Btn">Sound 3</button>
+        <div id="infoNotes" class="alert-box">
+            <strong>Important Notes:</strong>
+            <ul>
+                <li><strong>Requirements:</strong> HTTPS connection (or localhost) and a Chromium browser.</li>
+                <li><strong>Functionality:</strong> Emulates the physical dial. Works with BT, AUX, and USB.</li>
+                <li><strong>Volume:</strong> Only works when audio is actively playing (Firmware limitation).</li>
+                <li><strong>Troubleshooting:</strong> If unresponsive, <strong>power cycle speakers</strong> (unplug AC
+                    for 10s).</li>
+            </ul>
         </div>
 
-        <div id="advanced-toggle-div">
-            <label>
-                <input type="checkbox" id="advanced-toggle-checkbox">
-                Show Advanced Controls
+        <div class="card connection-bar">
+            <button id="connectBtn" class="primary">Connect to Speaker</button>
+            <span id="connectionStatus" class="status-text status-disconnected">Disconnected</span>
+            <label class="checkbox-label" style="font-size: 0.8rem; margin-left: auto;">
+                <input type="checkbox" id="showAllDevicesCheckbox"> Show all devices
             </label>
         </div>
 
-        <div id="advanced-controls" class="controls-section hidden">
-            <h4>System (Advanced)</h4>
-            <p>
-                <button id="factoryResetBtn">Factory Reset</button>
-            </p>
-            <h4>Custom Command Sender</h4>
-            <p>
-                <input type="text" id="custom-command-input" placeholder="e.g., 130, 0 or 0x82, 0x00">
-                <button id="custom-command-send" style="width: auto;">Send</button>
-            </p>
+        <!-- PRIMARY CONTROLS (Disabled when disconnected) -->
+        <div id="main-controls" class="controls-wrapper">
+
+            <div class="card">
+                <h4 class="section-title">Playback & Audio</h4>
+                <div class="btn-grid">
+                    <button data-cmd="PLAY_PAUSE">Play/Pause</button>
+                    <button data-cmd="VOLUME_UP">Vol +</button>
+                    <button data-cmd="VOLUME_DOWN">Vol -</button>
+                    <button data-cmd="BASS_UP">Bass +</button>
+                    <button data-cmd="BASS_DOWN">Bass -</button>
+                    <button data-cmd="NEXT_TRACK">Next</button>
+                    <button data-cmd="PREV_TRACK">Prev</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4 class="section-title">Source & System</h4>
+                <div class="btn-grid">
+                    <button data-cmd="SWITCH_BLUETOOTH">Bluetooth</button>
+                    <button data-cmd="SWITCH_AUX">AUX</button>
+                    <button data-cmd="SWITCH_USB">USB</button>
+                    <button id="pairingBtn" class="success">Pairing Mode</button>
+                </div>
+            </div>
         </div>
+
+        <!-- ADVANCED CONTROLS (Always accessible) -->
+        <div style="margin: 1em 0;">
+            <label class="checkbox-label">
+                <input type="checkbox" id="advanced-toggle-checkbox"> Show Advanced / Debug
+            </label>
+        </div>
+
+        <div id="advanced-controls" class="hidden">
+
+            <div class="card">
+                <h4 class="section-title">Sound Cues</h4>
+                <div class="btn-grid">
+                    <button data-cmd="SOUND_1">Sound 1</button>
+                    <button data-cmd="SOUND_2">Sound 2</button>
+                    <button data-cmd="SOUND_3">Sound 3</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4 class="section-title">System & Debug Tools</h4>
+                <div style="display: flex; gap: 0.5em; align-items: center; flex-wrap: wrap;">
+                    <button id="factoryResetBtn" class="danger">Factory Reset</button>
+                    <div style="flex-grow: 1; text-align: right;">
+                        <input type="text" id="custom-command-input" placeholder="e.g. 80 04">
+                        <button id="custom-command-send" class="primary" style="width: auto;">Send Hex</button>
+                    </div>
+                </div>
+            </div>
+
+            <h4 class="section-title" style="margin-top: 1.5em;">Event Log</h4>
+            <pre id="log"></pre>
+        </div>
+
     </div>
 
-    <h3>Status Log</h3>
-    <pre id="log"></pre>
-
     <script>
-        // UUIDs from the protocol documentation
+        // --- CONSTANTS ---
         const SERVICE_UUID = '0000fdc2-0000-1000-8000-00805f9b34fb';
         const COMMAND_UUID = 'c2e758b9-0e78-41e0-b0cb-98a593193fc5';
         const RESPONSE_UUID = 'b84ac9c6-29c5-46d4-bba1-9d534784330f';
 
-        // --- Complete Command Set ---
         const COMMANDS = {
-            // Handshake
             INITIATE: new Uint8Array([0x84, 0x05]),
             ACKNOWLEDGE: new Uint8Array([0x84, 0x00]),
-            // Audio & Playback
             VOLUME_UP: new Uint8Array([0x80, 0x02]),
             VOLUME_DOWN: new Uint8Array([0x80, 0x03]),
             BASS_UP: new Uint8Array([0x80, 0x00]),
@@ -155,135 +388,217 @@
             PLAY_PAUSE: new Uint8Array([0x80, 0x04]),
             NEXT_TRACK: new Uint8Array([0x80, 0x05]),
             PREV_TRACK: new Uint8Array([0x80, 0x06]),
-            // Source Switching
             SWITCH_BLUETOOTH: new Uint8Array([0x81, 0x01]),
             SWITCH_AUX: new Uint8Array([0x81, 0x02]),
             SWITCH_USB: new Uint8Array([0x81, 0x03]),
-            // Auditory Cues (Renamed)
-            SOUND_1: new Uint8Array([0x85, 0x02]), // Mode Switch Sound
-            SOUND_2: new Uint8Array([0x85, 0x01]), // Connect Sound
-            SOUND_3: new Uint8Array([0x85, 0x03]), // Fail/Disconnect Sound
-            // System
+            SOUND_1: new Uint8Array([0x85, 0x02]),
+            SOUND_2: new Uint8Array([0x85, 0x01]),
+            SOUND_3: new Uint8Array([0x85, 0x03]),
             PAIRING: new Uint8Array([0x82, 0x00]),
             FACTORY_RESET: new Uint8Array([0x83, 0x00]),
         };
 
-        // --- UI Elements ---
+        // --- STATE & QUEUE ---
+        let bluetoothDevice = null;
+        let commandCharacteristic = null;
+        let handshakeTimeoutTimer = null;
+        let commandQueue = Promise.resolve();
+
+        // --- DOM ELEMENTS ---
         const connectButton = document.getElementById('connectBtn');
-        const controlsDiv = document.getElementById('controls');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const mainControlsDiv = document.getElementById('main-controls');
         const logElement = document.getElementById('log');
         const advancedToggle = document.getElementById('advanced-toggle-checkbox');
         const advancedControls = document.getElementById('advanced-controls');
+        const showAllDevicesCheckbox = document.getElementById('showAllDevicesCheckbox');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const hideNotesToggle = document.getElementById('hideNotesToggle');
+        const infoNotes = document.getElementById('infoNotes');
 
-        let commandCharacteristic = null;
+        // --- INITIALIZATION CHECK ---
+        if (!navigator.bluetooth) {
+            document.getElementById('browser-warning').classList.remove('hidden');
+            connectButton.disabled = true;
+            connectButton.textContent = "Browser Not Supported";
+        }
 
+        // --- HELPERS ---
         function log(message) {
             console.log(message);
-            logElement.textContent += `> ${message}\n`;
+            const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            logElement.textContent += `[${time}] ${message}\n`;
             logElement.scrollTop = logElement.scrollHeight;
         }
 
-        // --- Core Bluetooth Logic ---
+        function toHex(dataViewOrBuffer) {
+            return Array.from(new Uint8Array(dataViewOrBuffer.buffer || dataViewOrBuffer))
+                .map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
+        }
+
+        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+        function updateConnectionState(isConnected) {
+            if (isConnected) {
+                mainControlsDiv.classList.add('active');
+                connectionStatus.textContent = 'Connected';
+                connectionStatus.classList.replace('status-disconnected', 'status-connected');
+                connectButton.textContent = 'Disconnect';
+                connectButton.classList.replace('primary', 'danger');
+            } else {
+                mainControlsDiv.classList.remove('active');
+                connectionStatus.textContent = 'Disconnected';
+                connectionStatus.classList.replace('status-connected', 'status-disconnected');
+                connectButton.textContent = 'Connect';
+                connectButton.classList.replace('danger', 'primary');
+                bluetoothDevice = null;
+                commandCharacteristic = null;
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+        darkModeToggle.addEventListener('change', (e) => document.body.classList.toggle('dark-mode', e.target.checked));
+        hideNotesToggle.addEventListener('change', (e) => infoNotes.classList.toggle('hidden', e.target.checked));
+
+        // --- BLUETOOTH LOGIC ---
         connectButton.addEventListener('click', async () => {
-            if (!navigator.bluetooth) {
-                log('Web Bluetooth API is not available in this browser.');
+            if (bluetoothDevice && bluetoothDevice.gatt.connected) {
+                bluetoothDevice.gatt.disconnect();
                 return;
             }
+
             try {
-                log('Requesting Bluetooth device...');
-                const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID] }] });
-                log(`Device found: "${device.name}"`);
+                const options = { optionalServices: [SERVICE_UUID] };
+                if (showAllDevicesCheckbox.checked) options.acceptAllDevices = true;
+                else options.filters = [{ services: [SERVICE_UUID] }];
+
+                const device = await navigator.bluetooth.requestDevice(options);
+                bluetoothDevice = device;
+                log(`Device Selected: "${device.name}"`);
+
                 device.addEventListener('gattserverdisconnected', () => {
-                    log('Device disconnected.');
-                    controlsDiv.classList.add('hidden');
-                    advancedControls.classList.add('hidden');
-                    advancedToggle.checked = false;
-                    commandCharacteristic = null;
+                    log('Device Disconnected.');
+                    updateConnectionState(false);
                 });
+
                 const server = await device.gatt.connect();
-                log('GATT Server connected. Getting service...');
+                log('GATT Connected.');
+
                 const service = await server.getPrimaryService(SERVICE_UUID);
                 const responseCharacteristic = await service.getCharacteristic(RESPONSE_UUID);
                 commandCharacteristic = await service.getCharacteristic(COMMAND_UUID);
 
                 await responseCharacteristic.startNotifications();
-                log('Subscribed to notifications. Starting handshake...');
+                log('Listening for Handshake...');
 
-                responseCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
-                    const value = event.target.value;
-                    const hexString = Array.from(new Uint8Array(value.buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-                    log(`Received: 0x${hexString}`);
+                // Handshake State Machine
+                let handshakeState = 1;
 
-                    if (hexString === 'd40501') {
-                        log('Handshake Step 1/2 OK. Sending ACKNOWLEDGE...');
-                        commandCharacteristic.writeValueWithoutResponse(COMMANDS.ACKNOWLEDGE);
-                    } else if (hexString === 'd40001' || hexString === 'd40003') {
-                        const successType = hexString === 'd40001' ? 'Standard' : 'Bonded Reconnect';
-                        log(`Handshake complete! (${successType}). Ready to send commands.`);
-                        controlsDiv.classList.remove('hidden');
+                // Safety timeout
+                handshakeTimeoutTimer = setTimeout(() => {
+                    if (handshakeState !== 3) {
+                        log('Error: Handshake timed out.');
+                        if (bluetoothDevice?.gatt.connected) bluetoothDevice.gatt.disconnect();
+                    }
+                }, 5000);
+
+                responseCharacteristic.addEventListener('characteristicvaluechanged', async (event) => {
+                    const hex = toHex(event.target.value);
+                    const cleanHex = hex.replace(/0x/g, '').replace(/\s/g, '');
+
+                    log(`Rx: [${hex}]`);
+
+                    if (cleanHex === 'd40501' && handshakeState === 1) {
+                        log('Handshake: Challenge Received.');
+                        await sleep(100);
+                        sendCommandRaw(COMMANDS.ACKNOWLEDGE, 'ACKNOWLEDGE');
+                        handshakeState = 2;
+                    }
+                    else if ((cleanHex === 'd40001' || cleanHex === 'd40003') && handshakeState === 2) {
+                        log('Handshake: Connection Secured.');
+                        clearTimeout(handshakeTimeoutTimer);
+                        updateConnectionState(true);
+                        handshakeState = 3;
                     }
                 });
 
-                await commandCharacteristic.writeValueWithoutResponse(COMMANDS.INITIATE);
-                log('Handshake Step 1/2: Sending INITIATE...');
+                sendCommandRaw(COMMANDS.INITIATE, 'INITIATE');
+
             } catch (error) {
                 log(`Error: ${error.message}`);
+                updateConnectionState(false);
             }
         });
 
-        // --- Command Sending Function ---
-        async function sendCommand(command) {
+        // --- COMMAND QUEUE ---
+        function sendCommand(command, name = 'Custom') {
             if (!commandCharacteristic) {
-                log('Not connected.');
+                log(`Failed to send ${name}: Not Connected`);
                 return;
             }
-            try {
-                await commandCharacteristic.writeValueWithoutResponse(command);
-            } catch (error) {
-                log(`Error sending command: ${error.message}`);
-            }
+
+            // Append to queue
+            commandQueue = commandQueue.then(async () => {
+                try {
+                    // Small delay to ensure previous operations clear the stack
+                    await sleep(50);
+                    const hexDisplay = toHex(command);
+                    log(`Tx: ${name} [${hexDisplay}]`);
+                    await commandCharacteristic.writeValueWithoutResponse(command);
+                } catch (error) {
+                    log(`Write failed: ${error.message}`);
+                    if (bluetoothDevice && !bluetoothDevice.gatt.connected) updateConnectionState(false);
+                }
+            }).catch(e => {
+                // Catch errors inside the chain so the queue doesn't stall forever
+                console.error("Queue error:", e);
+            });
         }
 
-        // --- Bind All Buttons ---
-        // Standard Controls
-        document.getElementById('volumeUpBtn').addEventListener('click', () => sendCommand(COMMANDS.VOLUME_UP));
-        document.getElementById('volumeDownBtn').addEventListener('click', () => sendCommand(COMMANDS.VOLUME_DOWN));
-        document.getElementById('bassUpBtn').addEventListener('click', () => sendCommand(COMMANDS.BASS_UP));
-        document.getElementById('bassDownBtn').addEventListener('click', () => sendCommand(COMMANDS.BASS_DOWN));
-        document.getElementById('playPauseBtn').addEventListener('click', () => sendCommand(COMMANDS.PLAY_PAUSE));
-        document.getElementById('nextTrackBtn').addEventListener('click', () => sendCommand(COMMANDS.NEXT_TRACK));
-        document.getElementById('prevTrackBtn').addEventListener('click', () => sendCommand(COMMANDS.PREV_TRACK));
-        document.getElementById('switchBluetoothBtn').addEventListener('click', () => sendCommand(COMMANDS.SWITCH_BLUETOOTH));
-        document.getElementById('switchAuxBtn').addEventListener('click', () => sendCommand(COMMANDS.SWITCH_AUX));
-        document.getElementById('switchUsbBtn').addEventListener('click', () => sendCommand(COMMANDS.SWITCH_USB));
-        document.getElementById('pairingBtn').addEventListener('click', () => sendCommand(COMMANDS.PAIRING));
-        document.getElementById('sound1Btn').addEventListener('click', () => sendCommand(COMMANDS.SOUND_1));
-        document.getElementById('sound2Btn').addEventListener('click', () => sendCommand(COMMANDS.SOUND_2));
-        document.getElementById('sound3Btn').addEventListener('click', () => sendCommand(COMMANDS.SOUND_3));
+        function sendCommandRaw(c, n) { sendCommand(c, n); }
 
-        // Advanced Controls
-        advancedToggle.addEventListener('change', () => {
-            advancedControls.classList.toggle('hidden', !advancedToggle.checked);
+        // --- BINDINGS ---
+        document.querySelectorAll('button[data-cmd]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const cmdKey = btn.dataset.cmd;
+                const cmd = COMMANDS[cmdKey];
+                if (cmd) sendCommand(cmd, cmdKey);
+            });
+        });
+
+        const pairingBtn = document.getElementById('pairingBtn');
+        pairingBtn.addEventListener('click', () => {
+            sendCommand(COMMANDS.PAIRING, 'PAIRING');
+
+            // Visual feedback
+            const originalText = pairingBtn.textContent;
+            pairingBtn.textContent = 'Active...';
+            pairingBtn.classList.add('active-state');
+            pairingBtn.disabled = true;
+
+            setTimeout(() => {
+                pairingBtn.textContent = originalText;
+                pairingBtn.classList.remove('active-state');
+                pairingBtn.disabled = false;
+            }, 10000);
         });
 
         document.getElementById('factoryResetBtn').addEventListener('click', () => {
-            if (confirm("Are you sure you want to factory reset the speaker? This will unpair all devices.")) {
-                sendCommand(COMMANDS.FACTORY_RESET);
-            }
+            if (confirm("Factory Reset: This will unpair all devices. Continue?")) sendCommand(COMMANDS.FACTORY_RESET, 'FACTORY_RESET');
         });
+
+        advancedToggle.addEventListener('change', () => advancedControls.classList.toggle('hidden', !advancedToggle.checked));
 
         document.getElementById('custom-command-send').addEventListener('click', () => {
             const input = document.getElementById('custom-command-input').value;
             try {
-                const byteValues = input.replace(',', ' ').split(' ').filter(p => p).map(p => parseInt(p, 0));
-                if (byteValues.some(v => isNaN(v) || v < 0 || v > 255)) {
-                    throw new Error("All values must be valid numbers between 0 and 255.");
-                }
-                log(`Sending custom command: [${byteValues.join(', ')}]`);
-                sendCommand(new Uint8Array(byteValues));
-            } catch (e) {
-                alert(`Invalid command format. Please use comma or space-separated numbers (e.g., '128, 4' or '0x80 0x04').\n\nError: ${e.message}`);
-            }
+                const clean = input.replace(/0x/g, '').replace(/,/g, ' ');
+                const bytes = clean.split(/\s+/).filter(p => p).map(p => parseInt(p, 16));
+                if (!bytes.length || bytes.some(isNaN)) throw new Error("Invalid Hex");
+
+                const u8 = new Uint8Array(bytes);
+                sendCommand(u8, 'CustomHex');
+            } catch (e) { alert(e.message); }
         });
     </script>
 </body>
