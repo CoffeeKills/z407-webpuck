@@ -2,7 +2,9 @@
 
 ## Overview
 
-This document outlines the reverse-engineered Bluetooth Low Energy (BLE) protocol used by the Logitech Z407 wireless control puck. By understanding this protocol, it's possible to create custom applications and scripts to control speaker functions like volume, bass, source switching, and more from a computer or mobile device.
+This document outlines the reverse-engineered Bluetooth Low Energy (BLE) protocol used by the Logitech Z407 wireless control puck. By understanding this protocol, it's possible to create custom applications and scripts to control speaker functions like volume, bass, source switching, and more from a computer.
+
+**Note:** This protocol *emulates* the commands sent by the physical puck. The commands work regardless of whether the active source is Bluetooth, AUX, or USB.
 
 The communication relies on writing specific byte arrays to one BLE "characteristic" and listening for response notifications on another. A critical "handshake" sequence is required upon connection to establish a stable link.
 
@@ -30,13 +32,14 @@ A stable connection requires a specific sequence of events. Sending user command
 
 Immediately after connecting, you must subscribe to notifications on the Response Characteristic. All feedback from the speaker, including the critical handshake steps, is sent via these notifications.
 
-### Step 3: Perform the Handshake
+### Step 3: Perform the Handshake (State Machine)
 
-The handshake authenticates the client to the speaker and is a simple three-part process.
+The handshake authenticates the client to the speaker. It follows a specific Challenge-Response pattern:
 
-1. The client sends the `INITIATE` command (`0x84 0x05`).
-2. Upon receiving the speaker's response (`d40501`), the client immediately sends the `ACKNOWLEDGE` command (`0x84 0x00`).
-3. The speaker confirms the connection with a final response (`d40003` or `d40001`), and the link is now stable and ready for commands.
+1.  **Initiate:** The client sends the `INITIATE` command (`0x84 0x05`).
+2.  **Challenge:** The speaker responds with a challenge notification (`d40501`).
+3.  **Acknowledge:** Upon receiving the challenge, the client *must* send the `ACKNOWLEDGE` command (`0x84 0x00`).
+4.  **Secured:** The speaker confirms the connection with a final response (`d40003` for bonded or `d40001` for standard). The link is now stable and ready for commands.
 
 ### Step 4: Send Commands and Receive Responses
 

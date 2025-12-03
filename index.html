@@ -288,17 +288,26 @@
 
         <div id="browser-warning" class="alert-box alert-error hidden">
             <strong>Incompatible Browser:</strong> This app requires the Web Bluetooth API (Chrome, Edge, Opera on
-            Desktop/Android). Firefox and Safari are not supported.
+            PC or Mac maybe). Firefox and Safari are not supported. (generally phones do NOT allow the Web Bluetooth API
+            for
+            security implications)
         </div>
 
         <div id="infoNotes" class="alert-box">
             <strong>Important Notes:</strong>
             <ul>
                 <li><strong>Requirements:</strong> HTTPS connection (or localhost) and a Chromium browser.</li>
-                <li><strong>Functionality:</strong> Emulates the physical dial. Works with BT, AUX, and USB.</li>
+                <li><strong>Functionality:</strong> Emulates the physical dial over Bluetooth LE. Works with BT, AUX,
+                    and USB audio sources.</li>
                 <li><strong>Volume:</strong> Only works when audio is actively playing (Firmware limitation).</li>
+                <li><strong>Wake Up:</strong> Speakers ignore commands in low-power mode. <strong>Play audio
+                        first</strong> to wake them up.</li>
                 <li><strong>Troubleshooting:</strong> If unresponsive, <strong>power cycle speakers</strong> (unplug AC
                     for 10s).</li>
+                <li><strong>Offline Use:</strong> Right-click > "Save As..." to keep a local copy (immune to updates).
+                </li>
+                <li><strong>App Mode:</strong> Use browser's "Install as App" or "Create Shortcut" for a native feel.
+                </li>
             </ul>
         </div>
 
@@ -457,8 +466,42 @@
         }
 
         // --- EVENT LISTENERS ---
-        darkModeToggle.addEventListener('change', (e) => document.body.classList.toggle('dark-mode', e.target.checked));
-        hideNotesToggle.addEventListener('change', (e) => infoNotes.classList.toggle('hidden', e.target.checked));
+        darkModeToggle.addEventListener('change', (e) => {
+            document.body.classList.toggle('dark-mode', e.target.checked);
+            saveSettings();
+        });
+        hideNotesToggle.addEventListener('change', (e) => {
+            infoNotes.classList.toggle('hidden', e.target.checked);
+            saveSettings();
+        });
+        showAllDevicesCheckbox.addEventListener('change', saveSettings);
+        advancedToggle.addEventListener('change', () => {
+            advancedControls.classList.toggle('hidden', !advancedToggle.checked);
+            saveSettings();
+        });
+
+        // --- PERSISTENCE ---
+        function saveSettings() {
+            const settings = {
+                darkMode: darkModeToggle.checked,
+                hideNotes: hideNotesToggle.checked,
+                showAll: showAllDevicesCheckbox.checked,
+                advanced: advancedToggle.checked
+            };
+            localStorage.setItem('z407_settings', JSON.stringify(settings));
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('z407_settings');
+            if (saved) {
+                const s = JSON.parse(saved);
+                if (s.darkMode) { darkModeToggle.checked = true; document.body.classList.add('dark-mode'); }
+                if (s.hideNotes) { hideNotesToggle.checked = true; infoNotes.classList.add('hidden'); }
+                if (s.showAll) { showAllDevicesCheckbox.checked = true; }
+                if (s.advanced) { advancedToggle.checked = true; advancedControls.classList.remove('hidden'); }
+            }
+        }
+        loadSettings();
 
         // --- BLUETOOTH LOGIC ---
         connectButton.addEventListener('click', async () => {
@@ -586,8 +629,6 @@
         document.getElementById('factoryResetBtn').addEventListener('click', () => {
             if (confirm("Factory Reset: This will unpair all devices. Continue?")) sendCommand(COMMANDS.FACTORY_RESET, 'FACTORY_RESET');
         });
-
-        advancedToggle.addEventListener('change', () => advancedControls.classList.toggle('hidden', !advancedToggle.checked));
 
         document.getElementById('custom-command-send').addEventListener('click', () => {
             const input = document.getElementById('custom-command-input').value;
